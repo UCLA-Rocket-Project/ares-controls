@@ -5,7 +5,7 @@ con.flush()
 time.sleep(2)
 con.reset_input_buffer()
 
-address = 0x01
+address = 0xA1
 op_code = 0xc1
 data = 0x03
 stop_code = 0xff

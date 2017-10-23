@@ -1,4 +1,4 @@
-#define ADDRESS 0x01
+#define ADDRESS 0xA1
 #define STOPCODE 0xff
 #define BBSIZE 10
 #define BYTES_TO_PROCESS 3
@@ -23,10 +23,10 @@ byte byte_buffer[BBSIZE];
 void processBytes();
 bool setRelay(int, int);
 byte getRelay(int);
- 
+
 void setup() {
    Serial.begin(9600);
-  
+
   for (int i = 0; i < 8; i++) {
     digitalWrite(relays[i], HIGH);
     pinMode(relays[i], OUTPUT);
@@ -52,7 +52,7 @@ void loop() {
 void processBytes(byte b_buffer[10]) {
     Serial.write(0xc4);
     byte opcode = b_buffer[0];
-    
+
     if (b_buffer[2] != STOPCODE) {
       Serial.write(0xe0);
       Serial.write(0xe0);
@@ -82,4 +82,3 @@ bool setRelay(int relay, int mode) {
   digitalWrite(relays[relay], mode);
   return true;
 }
-
