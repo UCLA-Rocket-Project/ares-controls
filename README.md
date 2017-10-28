@@ -2,6 +2,9 @@
 Control systems for the Ares rocket
 
 ### MCU Command Requests
+
+This is gonna change, we're using CRC's now
+
 Command requests are sent over Serial in 4-byte packets
 
 | Byte 1             |   Byte 2       |   Byte 3     |   Byte 4  |
