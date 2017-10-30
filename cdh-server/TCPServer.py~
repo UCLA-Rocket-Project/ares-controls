@@ -80,17 +80,7 @@ def setRelay(command, relay):
 	mapper.append(relay)
 	return mapper
 	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)	
-setRelay(PRESS_PROP_SET, RELAY0)
+setRelay(PRESS_PROP_SET, RELAY0)	#map rest of relays
 
 	
 def getRelay(command):
@@ -110,14 +100,13 @@ def handleArray(array, address):
 		tempArray = [address, opcodeMatcher(PRESS_PROP_SET, array[1]), opcodeMatcher(OX_FILL_SET, array[2]), opcodeMatcher(PRESS_VENT_SET, array[3]), opcodeMatcher(OX_VENT_SET, array[4]), opcodeMatcher(FUEL_VENT_SET, array[5]), opcodeMatcher(FUEL_CC_SET, array[6]), opcodeMatcher(OX_CC_SET, array[7]), 0x00, STOPCODE]
 	return tempArray
 	
-
 def handleData(byteArray):
 	command = byteArray[0]
 	if command in fcmCommands:
-		return mapArray(byteArray, FCMADDRESS)
+		return handleArray(byteArray, FCMADDRESS)
 	else if command in gcmCommands:
-		return mapArray(byteArray, GCMADDRESS)
-			
+		return handleArray(byteArray, GCMADDRESS)
+					
 	"""else if byteArray[0] == PRESS_PROP_SET:
 		if byteArray[1] == VALVE_CLOSE:
 			bytesToSend = [FCMADDRESS, RELAY_OFF, RELAY0, STOPCODE]
