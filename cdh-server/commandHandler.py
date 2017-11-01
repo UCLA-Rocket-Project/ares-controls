@@ -50,7 +50,7 @@ def delayHandler(byteArray, commandObject):
 			onOrOffByte = 0x01
 		else:
 			onOrOffByte = 0x00
-	return [commandObject.value.addr, consts.Opcode.RELAY_SET_DELAYED.value, onOrOffByte, byteArray[2], byteArray[3]]
+	return [commandObject.value.addr, consts.Opcode.RELAY_SET_DELAYED.value, commandObject.value.relay, onOrOffByte, byteArray[2], byteArray[3]]
 	
 def setValves(byteArray):
 	#print("Checked setValves")
@@ -82,8 +82,6 @@ def handleCommand(byteArray):
 	if not isSpecial(command) and commandObject == consts.Relays.ERROR:
 		return [consts.Addr.CDH, 0xe1]
 	if isSpecial(command):
-		if command == op.IGNITE_FOR_TIME:
-			return [commandObject.value.addr, 0x01, byteArray[1], byteArray[2]]
 		if command == op.VALVES_SET_ALL:
 			return setValves(byteArray)
 		if command == op.VALVES_GET_ALL:
@@ -98,6 +96,3 @@ def handleCommand(byteArray):
 		return [commandObject.value.addr, handleRelay(turnOnRelay == byteArray[1]).value, commandObject.value.relay]
 	#there are some more special statements that may be added here later
 	return [consts.Addr.CDH, 0xe1] #subject to change
-
-array = [0x39, 0x01, 0, 1]
-print(handleCommand(array))
