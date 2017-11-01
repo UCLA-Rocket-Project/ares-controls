@@ -1,174 +1,23 @@
-import serial as ps
-import time
-import socket
-import sys
+import socketserver
+import commandHandler as ch
+from threading import Thread
 
-import mcu_consts as mcu
-import cdh_opcodes as cdhOP
+class TCPServerHandler(socketserver.BaseRequestHandler):
 
+    def handle(self):
+        print("Connection from {}".format(self.client_address[0]))
+        while(1):
+            # self.request is the TCP socket connected to the client
+            self.data = self.request.recv(1024)
+            if not self.data:
+                break
+            print("got data: " + self.data)
+            print("first byte: " + hex(ord(self.data[0])))
+            response = ch.handleCommand(self.data)
+            self.request.sendall(response)
+        print("Client disconnected: {}".format(self.client_address[0]))
 
-def isCorrectData(byteArray):
-	return True; #will change soon
-
-def opcodeMatcher(command, opcode): #change so that default is normally open
-	if command == PRESS_PROP_SET or command == OX_FILL_SET or command == FUEL_FUEL_SET or command == FUEL_CC_DELAYED_SET or command == OX_CC_SET or command == OX_CC_DELAYED_SET or command == PRESS_FILL_SET:
-		if opcode == cdhOP.VALVE_CLOSE: return RELAY_OFF
-		if opcode == VALVE_OPEN: return RELAY_ON
-	else:
-		if opcode == VALVE_CLOSE: return RELAY_ON
-		if opcode == VALVE_OPEN: return RELAY_OFF
-
-def setRelay(command, relay):
-	mapper = []
-	mapper.append(command)
-	mapper.append(relay)
-	return mapper
-	#map rest of relays
-
-setRelay(PRESS_PROP_SET, RELAY0)
-setRelay(OX_FILL_SET, RELAY1)
-setRelay(PRESS_VENT_SET, RELAY2)
-setRelay(PRESS_VENT_DELAYED_SET, RELAY2)
-setRelay(OX_VENT_SET, RELAY3)
-setRelay(OX_VENT_DELAYED_SET, RELAY3)
-setRelay(FUEL_VENT_SET, RELAY4)
-setRelay(FUEL_VENT_DELAYED_SET, RELAY4)
-setRelay(FUEL_CC_SET, RELAY5)
-setRelay(FUEL_CC_DELAYED_SET, RELAY5)
-setRelay(OX_CC_SET, 0x3c)
-setRelay(OX_CC_DELAYED_SET, RELAY6)
-
-
-def getRelay(command):
-	return mapper[1]
-
-def handleArray(array, address): #only works for press fill, ignite, and quick disconnect, should be changed for CDH functions and failsafe
-	command = array[0]
-	data = array[1]
-	if (len(array) == 3 and command != VALVES_GET_ALL and command != QD_CHECK_READY) or (array[0] == PRESS_FILL_SET or array[0] == IGNITION_SET): #regular
-		tempArray = [address, opcodeMatcher(command, data), getRelay(command), STOPCODE]
-	else if len(array) == 5: #delayed
-		data1 = array[1]
-		data2 = array[2]
-		data3 = array[3]
-		tempArray = [address, RELAY_SET_DELAYED, getRelay(command), data1, data2, data3, STOPCODE]
-	else if len(array) == 9: #set valves
-		tempArray = [address, opcodeMatcher(PRESS_PROP_SET, array[1]), opcodeMatcher(OX_FILL_SET, array[2]), opcodeMatcher(PRESS_VENT_SET, array[3]), opcodeMatcher(OX_VENT_SET, array[4]), opcodeMatcher(FUEL_VENT_SET, array[5]), opcodeMatcher(FUEL_CC_SET, array[6]), opcodeMatcher(OX_CC_SET, array[7]), 0x00, STOPCODE]
-	else if len(array) == 4: #ignite times
-		#tempArray = [address, RELAY_SET_DELAYED, RELAY_ON, array[2], array[3]] no... the opcode for this doesn't exist yet
-	return tempArray
-
-def handleData(byteArray):
-	command = byteArray[0]
-	if command in fcmCommands:
-		return handleArray(byteArray, FCMADDRESS)
-	else if command in gcmCommands:
-		return handleArray(byteArray, GCMADDRESS)
-
-	"""else if byteArray[0] == PRESS_PROP_SET:
-		if byteArray[1] == VALVE_CLOSE:
-			bytesToSend = [FCMADDRESS, RELAY_OFF, RELAY0, STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_ON, RELAY0, STOPCODE]
-	else if byteArray[0] == OX_FILL_SET:
-		if byteArray[1] == VALVE_CLOSE:
-			bytesToSend = [FCMADDRESS, RELAY_OFF, RELAY1, STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_ON, RELAY1, STOPCODE]
-	else if byteArray[0] == PRESS_VENT_SET:
-		if byteArray[1] == VALVE_OPEN:
-			bytesToSend = [FCMADDRESS, RELAY_OFF, RELAY2, STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_ON, RELAY2, STOPCODE]
-	else if byteArray[0] == PRESS_VENT_DELAYED_SET
-		if byteArray[1] == VALVE_OPEN:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY2, RELAY_OFF, byteArray[2], byteArray[3], STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY2, RELAY_ON, byteArray[2], byteArray[3], STOPCODE]
-	else if byteArray[0] == OX_VENT_SET
-		if byteArray[1] == VALVE_OPEN:
-			bytesToSend = [FCMADDRESS, RELAY_OFF, RELAY3, STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_ON, RELAY3, STOPCODE]
-	else if byteArray[0] == OX_VENT_DELAYED_SET
-		if byteArray[1] == VALVE_OPEN:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY3, RELAY_OFF, byteArray[2], byteArray[3], STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY3, RELAY_ON, byteArray[2], byteArray[3], STOPCODE]
-	else if byteArray[0] == FUEL_VENT_SET:
-		if byteArray[1] == VALVE_OPEN:
-			bytesToSend = [FCMADDRESS, RELAY_OFF, RELAY4, STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_ON, RELAY4, STOPCODE]
-	else if byteArray[0] == FUEL_VENT_DELAYED_SET:
-		if byteArray[1] == VALVE_OPEN:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY4, RELAY_OFF, byteArray[2], byteArray[3], STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY4, RELAY_ON, byteArray[2], byteArray[3], STOPCODE]
-	else if byteArray[0] == FUEL_CC_SET:
-		if byteArray[1] == VALVE_CLOSED:
-			bytesToSend = [FCMADDRESS, RELAY_OFF, RELAY5, STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_ON, RELAY5, STOPCODE]
-	else if byteArray[0] == FUEL_CC_DELAYED_SET:
-		if byteArray[1] == VALVE_CLOSED:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY5, RELAY_OFF, byteArray[2], byteArray[3], STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY5, RELAY_ON, byteArray[2], byteArray[3], STOPCODE]
-	else if byteArray[0] == OC_CC_SET:
-		if byteArray[1] == VALVE_CLOSED:
-			bytesToSend = [FCMADDRESS, RELAY_OFF, RELAY6, STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_ON, RELAY6, STOPCODE]
-	else if byteArray[0] == OX_CC_DELAYED_SET:
-		if byteArray[1] == VALVE_CLOSED:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY6, RELAY_OFF, byteArray[2], byteArray[3], STOPCODE]
-		else:
-			bytesToSend = [FCMADDRESS, RELAY_SET_DELAYED, RELAY6, RELAY_ON, byteArray[2], byteArray[3], STOPCODE]
-
-	else if byteArray[0] == PRESS_FILL_SET:
-		if byteArray[1] == VALVE_CLOSED:
-			bytesToSend = [GCMADDRESS, RELAY_OFF, RELAY0, STOPCODE]
-		else:
-			bytesToSend = [GCMADDRESS, RELAY_ON, RELAY0, STOPCODE]
-	else if byteArray[0] == IGNITION_SET:
-		if byteArray[1] == """
-
-def serialSend(data):
-	con.write(b)
-	for i in range(0,4):
-		out.append(con.read())
-	print(out)
-	print(out)
-
-con = ps.Serial('/dev/cu.usbmodem1421')
-con.flush()
-time.sleep(2)
-con.reset_input_buffer()
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('localhost', 10000)
-print >>sys.stderr, 'starting up on %s port %s' % server_address
-sock.bind(server_address)
-sock.listen(1)
-
-while True:
-	print >>sys.stderr, 'waiting for a connection'
-	connection, client_address = sock.accept()
-	try:
-		print >>sys.stderr, 'connection from', client_address
-
-		while True:
-			data = connection.recv(30)
-			print >>sys.stderr, 'received' + data
-			if data: #and isCorrectData(data):
-				data = handleData(data)
-				print >>sys.stderr, 'sending data back to connection and to FCM'
-				connection.sendall(data)
-				serialSend(data)
-			else:
-				print >>sys.stderr, 'no more data from', client_address
-				break
-
-	finally:
-		connection.close()
+def getServerThread(HOST, PORT):
+    server = socketserver.TCPServer((HOST, PORT), TCPServerHandler)
+    t = Thread(target=server.serve_forever())
+    return t
