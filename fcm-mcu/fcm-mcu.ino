@@ -1,3 +1,5 @@
+#define isFCMorGCM 0x00
+
 #define ADDRESS 0x40
 #define piAddress 0xc0
 #define BBSIZE 2
@@ -103,6 +105,14 @@ void loop () {
         currentDataIdx = 0;
         for (int i = 0; i < MAXDATA; i++) {
           storedData[i] = 0;
+        }
+      }
+    }
+    else {
+      if ((byte_buffer[0] & opCodeMask) == 0x1d) {
+        byte_buffer[1] = Serial.read();
+        if (byte_buffer[1] == isFCMorGCM) {
+          sendOverSerial2(0x01, ADDRESS);
         }
       }
     }
