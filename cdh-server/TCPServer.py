@@ -24,8 +24,9 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
 
             addr = mcuCommand.pop(0)
             opcode = mcuCommand.pop(0)
+            mcuCommandTwo = list(mcuCommand)
             response = sh.fcmHandler.sendDataToMCU(addr, opcode, mcuCommand)
-            responseTwo = sh.gcmHandler.sendDataToMCU(addr, opcode, mcuCommand)
+            responseTwo = sh.gcmHandler.sendDataToMCU(addr, opcode, mcuCommandTwo)
             response.extend(responseTwo)
 
             self.request.sendall(response)
