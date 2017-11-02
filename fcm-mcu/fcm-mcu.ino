@@ -16,10 +16,10 @@
 #define Relay1 11
 #define Relay2 10
 #define Relay3 9
-#define Relay4 8
-#define Relay5 7
-#define Relay6 6
-#define Relay7 5
+#define Relay4 7
+#define Relay5 6
+#define Relay6 5
+#define Relay7 4
 
 int relays[] = {Relay0, Relay1, Relay2, Relay3, Relay4, Relay5, Relay6, Relay7};
 
@@ -41,6 +41,9 @@ void setup() {
 
   for (int i = 0; i < 8; i++) {
     digitalWrite(relays[i], HIGH);
+  }
+  delay(20);
+  for (int i = 0; i < 8; i++) {
     pinMode(relays[i], OUTPUT);
   }
 
@@ -198,25 +201,27 @@ void processCommand (byte currentCommand[]) {
     byte relayStates;
     for (int i = 0; i < 8; i++) {
      relayStates |= getRelay(i);
-     relayStates <<= 1;
+     if (i < 7) {
+      relayStates <<= 1;
+     }
     }
     sendOverSerial2(0x01, relayStates);
     break;
     case opCodeList[4]:
     for (int i = 0; i < 8; i++) {
-     setRelay(relays[i], 1);
+     setRelay(i, 1);
     }
     sendOverSerial2(0x01, 0x00);
     break;
     case opCodeList[5]:
     for (int i = 0; i < 8; i++) {
-     setRelay(relays[i], 0);
+     setRelay(i, 0);
     }
     sendOverSerial2(0x01, 0x00);
     break;
     case opCodeList[6]:
     for (int i = 0; i < 8; i++) {
-     setRelay(relays[i], currentCommand[i]);
+     setRelay(i, currentCommand[i+1]);
     }
     sendOverSerial2(0x01, 0x00);
     break;
