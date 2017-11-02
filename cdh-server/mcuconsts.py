@@ -27,6 +27,7 @@ class Opcode(Enum):
     RELAY_OFF = 0x10
     RELAY_ON = 0x11
     RELAY_GET = 0x12
+    RELAY_SET_DELAYED = 0xCF
     RELAY_GET_ALL_STATES = 0x13
     RELAY_ALL_OFF = 0x14
     RELAY_ALL_ON = 0x15

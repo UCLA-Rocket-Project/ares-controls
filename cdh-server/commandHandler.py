@@ -9,6 +9,16 @@ CLOSE_VALVE = 0x00
 RELAY_ON = 0x01
 RELAY_OFF = 0x00
 
+FCM_RELAY_OBJECTS = [
+consts.Relays.PRESS_PROP,
+consts.Relays.OX_FILL,
+consts.Relays.PRESS_VENT,
+consts.Relays.OX_VENT,
+consts.Relays.FUEL_VENT,
+consts.Relays.FUEL_CC,
+consts.Relays.OX_CC
+]
+
 def getRelayFromOpcode(command):
 	if command in consts.OPCODE_MATCHER:
 		return consts.OPCODE_MATCHER[command]
@@ -19,8 +29,8 @@ def getRelayOpcode(turnOn):
 		return consts.Opcode.RELAY_ON.value
 	return consts.Opcode.RELAY_OFF.value
 
-def delayHandler(byteArray):
-    commandObject = getRelayFromOpcode(command)
+def handleSetDelayed(cmd_opcode, byteArray):
+    commandObject = getRelayFromOpcode(cmd_opcode)
     if not len(byteArray) == 4:
         return ERROR
 
@@ -36,22 +46,14 @@ def delayHandler(byteArray):
     return [commandObject.value.addr, consts.Opcode.RELAY_SET_DELAYED.value, commandObject.value.relay, relayStatus, byteArray[2], byteArray[3]]
 
 def setValves(byteArray):
-	#print("Checked setValves")
-	array = [consts.Addr.FCM, consts.Opcode.RELAY_SET_ALL.value]
+	array = [consts.Addr.FCM, consts.Opcode.RELAY_SET_ALL.value, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+	relays = []
 	if not len(byteArray) == 8:
 		return ERROR
-	objects = [
-        consts.Relays.PRESS_PROP,
-		consts.Relays.OX_FILL,
-		consts.Relays.PRESS_VENT,
-		consts.Relays.OX_VENT,
-		consts.Relays.FUEL_VENT,
-		consts.Relays.FUEL_CC,
-		consts.Relays.OX_CC
-	]
 	for i in range(1, len(byteArray)):
 		valveStatus = byteArray[i]
-		commandObject = objects[i - 1]
+		commandObject = FCM_RELAY_OBJECTS[i - 1]
+		relays.append(commandObject.value.relay)
 		if consts.IS_NORMALLY_CLOSED[commandObject]:
 				relayStatus = valveStatus
 		else:
@@ -59,7 +61,7 @@ def setValves(byteArray):
 				relayStatus = RELAY_ON
 			else:
 				relayStatus = RELAY_OFF
-		array.append(relayStatus)
+		array[relays[i - 1] + 2] = relayStatus
 	return array
 
 def handleSetBulkCommand(cmd_opcode, byteArray):
@@ -91,20 +93,23 @@ def handleSetValve(cmd_opcode, byteArray):
 
 # Returns an MCU command corresponding to a given CDH command sequence
 def handleCommand(byteArray):
-    cmd_opcode = byteArray[0]
-    return getMCUCommand(cmd_opcode, byteArray)
+	cmd_opcode = byteArray[0]
+	return getMCUCommand(cmd_opcode, byteArray)
 
 def getMCUCommand(cmd_opcode, byteArray):
     # TODO: check correct length
-    cmd_optype = op.OPCODE_TYPES[cmd_opcode];
+	cmd_optype = op.OPCODE_TYPES[cmd_opcode]
 
-    if(cmd_optype == op.OpType.SETVALVE):
-        return handleSetValve(cmd_opcode, byteArray)
+	if(cmd_optype == op.OpType.SETVALVE):
+		return handleSetValve(cmd_opcode, byteArray)
 
-    elif(cmd_optype == op.OpType.SETBULK):
-        return handleSetBulkCommand(cmd_opcode, byteArray)
+	elif(cmd_optype == op.OpType.SETBULK):
+		return handleSetBulkCommand(cmd_opcode, byteArray)
 
-    elif(cmd_optype == op.OpType.QD):
-        return handleQD(byteArray);
+	elif(cmd_optype == op.OpType.QD):
+		return handleQD(cmd_opcode, byteArray)
 
-    return ERROR
+	elif(cmd_optype == op.OpType.SETDELAYED):
+		return handleSetDelayed(cmd_opcode, byteArray)
+
+	return ERROR
