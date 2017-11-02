@@ -25,8 +25,8 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
             addr = mcuCommand.pop(0)
             opcode = mcuCommand.pop(0)
             mcuCommandTwo = list(mcuCommand)
-            response = sh.fcmHandler.sendDataToMCU(addr, opcode, mcuCommand)
-            responseTwo = sh.gcmHandler.sendDataToMCU(addr, opcode, mcuCommandTwo)
+            response = bytearray(sh.fcmHandler.sendDataToMCU(addr, opcode, mcuCommand))
+            responseTwo = bytearray(sh.gcmHandler.sendDataToMCU(addr, opcode, mcuCommandTwo))
             response.extend(responseTwo)
 
             self.request.sendall(response)
@@ -34,6 +34,7 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
         print("Client disconnected: {}".format(self.client_address[0]))
 
 def getServerThread(HOST, PORT):
+    socketserver.TCPServer.allow_reuse_address = True
     server = socketserver.TCPServer((HOST, PORT), TCPServerHandler)
     t = Thread(target=server.serve_forever())
     return t

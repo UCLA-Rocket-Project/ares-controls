@@ -18,6 +18,7 @@ class Relays(Enum):
     FUEL_VENT = Relay(Addr.FCM, 4)
     FUEL_CC = Relay(Addr.FCM, 5)
     OX_CC = Relay(Addr.FCM, 6)
+    OX_DUMP = Relay(Addr.FCM, 7)
     PRESS_FILL = Relay(Addr.GCM, 0)
     IGNITION = Relay(Addr.GCM, 1)
     QD = Relay(Addr.GCM, 2)
@@ -47,6 +48,7 @@ OPCODE_MATCHER = {
 	op.OX_CC_DELAYED_SET: Relays.OX_CC,
 	op.PRESS_FILL_SET: Relays.PRESS_FILL,
 	op.IGNITION_SET: Relays.IGNITION,
+        op.OX_DUMP_SET: Relays.OX_DUMP
 	# op.IGNITE_FOR_TIME: Relays.IGNITION
 }
 
@@ -60,5 +62,6 @@ IS_NORMALLY_CLOSED = {
     Relays.OX_CC: True,
     Relays.PRESS_FILL: True,
     Relays.IGNITION: True,
-    Relays.QD: True
+    Relays.QD: True,
+    Relays.OX_DUMP: True
 }
