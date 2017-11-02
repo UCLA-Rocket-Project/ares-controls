@@ -1,6 +1,14 @@
-#define ADDRESS 0xc0
+#define ADDRESS 0x40
+#define piAddress 0xc0
 #define BBSIZE 2
 #define MAXDATA 10
+
+#define opCodeMask 0x3f
+#define addressMask 0xc0
+
+#define opCodeError 0xfd
+#define dataLengthError 0xfe
+#define crcError 0xff
 
 #define numOpCodes 15 //13 + continue and stop codes
 
@@ -15,8 +23,8 @@
 
 int relays[] = {Relay0, Relay1, Relay2, Relay3, Relay4, Relay5, Relay6, Relay7};
 
-constexpr byte opCodeList[] = {0x00,0x01,0x02,0x03,0x04,0x05,0x06,0xff,0xff,0xff,0xff,0xff,0xff,0x3e,0x3f}; /*all the op codes including continue and stop as the last two*/ // still need to set op codes
-constexpr int opCodeLengths[] = {1,1,1,1,1,1,8,4,1,1,1,8,1,-1,-1}; /*corresponding expected data lengths for each op code (ORDER MATTERS)*/
+constexpr byte opCodeList[] = {0x10,0x11,0x012,0x13,0x14,0x15,0x16,0xff,0xff,0xff,0xff,0xff,0xff,0x3e,0x3f}; /*all the op codes including continue and stop as the last two*/ // still need to set op codes
+constexpr int opCodeLengths[] = {2,2,2,2,2,2,9,5,2,2,2,9,2,-1,-1}; /*corresponding expected data lengths for each op code (ORDER MATTERS)*/
 
 byte byte_buffer[BBSIZE];
 byte storedData[MAXDATA];
@@ -43,11 +51,14 @@ byte incoming_byte;
 byte nextOpCode;
 
 void loop () {
-  if (Serial.available()) {
-    Serial.readBytes(byte_buffer, 2);
-    if (byte_buffer[0] & 0xc0 == ADDRESS) {
-      nextOpCode = byte_buffer[0] & 0x3f;
+  if (Serial.available() > 1) {
+    byte_buffer[0] = Serial.read();
+    if ((byte_buffer[0] & addressMask) == ADDRESS) {
+      nextOpCode = byte_buffer[0] & opCodeMask;
       int opCodeResult = processOpCode(nextOpCode);
+      if (opCodeResult != 3) {
+        byte_buffer[1] = Serial.read();
+      }
       if (opCodeResult == 0) {
         /*New Op Code -> RESET*/
         currentDataIdx = 0;
@@ -71,12 +82,21 @@ void loop () {
         for (int i = 0; i < currentDataIdx; i++) {
           assembledCommand[i] = storedData[i];
         }
-        if (CRC8(assembledCommand, currentDataIdx) == currentCRC && currentDataIdx == expectedDataLength) {
-          processCommand(assembledCommand);
+        if (currentDataIdx == expectedDataLength) {
+          if (CRC8(assembledCommand, currentDataIdx) == currentCRC) {
+            processCommand(assembledCommand);
+          }
+          else {
+            sendOverSerial2(0x00, crcError);
+          }
+        }
+        else {
+          sendOverSerial2(0x00, dataLengthError);
         }
       }
       else if (opCodeResult == 3) {
         /*Invalid code -> RESET*/
+        sendOverSerial2(0x00, opCodeError);
         currentDataIdx = 0;
         for (int i = 0; i < MAXDATA; i++) {
           storedData[i] = 0;
@@ -85,32 +105,6 @@ void loop () {
     }
   }
 }
-
-/*
-void processBytes(byte b_buffer[2]) {
-    Serial.write(0xc4);
-    byte opcode = b_buffer[0];
-
-     if (CRC8(b_buffer) == crcByte) {
-      
-    } else if (b_buffer[2] != STOPCODE) {
-      Serial.write(0xe0);
-      Serial.write(0xe0);
-    } else if (opcode == OPCODE_ON || opcode == OPCODE_OFF) {
-      setRelay(b_buffer[1], opcode == OPCODE_OFF);
-      Serial.write(opcode);
-      Serial.write(getRelay(b_buffer[1]));
-    } else if (opcode == OPCODE_GET) {
-      Serial.write(opcode);
-      Serial.write(getRelay(b_buffer[1]));
-    } else {
-      Serial.write(0xec);
-      Serial.write(0xec);
-    }
-
-    Serial.write(0xff);
-}
-*/
 
 byte getRelay(int relay)
 {
@@ -153,13 +147,15 @@ int processOpCode (byte opCode) {
    */
    int idxAtOpCode  = -1;
    bool validOpCode = false;
+   
    for (int i = 0; i < numOpCodes; i++) {
      if (opCode == opCodeList[i]) {
        validOpCode = true;
        idxAtOpCode = i;
      }
    }
-   if (idxAtOpCode > -1 && idxAtOpCode < 14) {
+   
+   if (idxAtOpCode > -1 && idxAtOpCode < 13) {
     expectedDataLength = opCodeLengths[idxAtOpCode];
    }
    else  if (idxAtOpCode = -1) {
@@ -189,40 +185,46 @@ void processCommand (byte currentCommand[]) {
   switch (opCode) {
     case opCodeList[0]:
     setRelay(currentCommand[1], 1);
+    sendOverSerial2(0x01, 0x00);
     break;
     case opCodeList[1]:
     setRelay(currentCommand[1], 0);
+    sendOverSerial2(0x01, 0x00);
     break;
     case opCodeList[2]:
-    //Serial.write(getRelay(currentCommand[1])); // not too sure about how to respond, should implement similar comm system for response
+    sendOverSerial2(0x01, getRelay(currentCommand[1]));
     break;
     case opCodeList[3]:
-    int relayStates[8];
+    byte relayStates;
     for (int i = 0; i < 8; i++) {
-     relayStates[i] = getRelay(i);
+     relayStates |= getRelay(i);
+     relayStates <<= 1;
     }
-    // send back relay states
+    sendOverSerial2(0x01, relayStates);
     break;
     case opCodeList[4]:
     for (int i = 0; i < 8; i++) {
      setRelay(relays[i], 1);
     }
+    sendOverSerial2(0x01, 0x00);
     break;
     case opCodeList[5]:
     for (int i = 0; i < 8; i++) {
      setRelay(relays[i], 0);
     }
+    sendOverSerial2(0x01, 0x00);
     break;
     case opCodeList[6]:
     for (int i = 0; i < 8; i++) {
      setRelay(relays[i], currentCommand[i]);
     }
+    sendOverSerial2(0x01, 0x00);
     break;
+    /*
     case opCodeList[7]:
     // set delay, amount based on currentCommand[3 and 4], but how?
     // setRelay(currentCommand[1], currentCommand[2]);
     break;
-    /*
     case opCodeList[8]:
     // do something
     break;
@@ -242,17 +244,10 @@ void processCommand (byte currentCommand[]) {
   }
 }
 
-void sendOverSerial (byte dataToSend[], int numBytes) {
-  // comm protocol for sending data over serial (address + opCode = byte 1, data = byte 2)
-  byte destinationAddress = dataToSend[0] & 0xc0;
-  byte opCodeToSend = dataToSend[0] & 0x3f;
-  Serial.write(dataToSend[0]);
-  Serial.write(dataToSend[1]);
-  for (int i = 2; i < numBytes; i++) {
-    Serial.write (opCodeList[13]);
-    Serial.write (dataToSend[i]);
-  }
-  Serial.write (opCodeList[14]);
-  Serial.write (CRC8(dataToSend, numBytes));
+void sendOverSerial2 (byte success, byte data) {
+  byte addressSuccessData[] = {piAddress | success, data};
+  Serial.write(addressSuccessData[0]);
+  Serial.write(addressSuccessData[1]);
+  Serial.write(piAddress | opCodeList[14]);
+  Serial.write(CRC8(addressSuccessData, 2));
 }
-
