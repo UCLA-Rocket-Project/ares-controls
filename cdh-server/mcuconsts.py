@@ -3,12 +3,10 @@ from enum import Enum
 from collections import namedtuple
 import opcodes as op
 
-SERIAL_STOPCODE = 0xFF
-
 class Addr:
-    GCM = 0xA1 #subject to change
-    FCM = 0xA2 #subject to change
-    CDH = 0xAC #subject to change
+    GCM = 0x80 #subject to change
+    FCM = 0x40  #subject to change
+    CDH = 0xC0 #subject to change
 
 Relay = namedtuple('Relay', 'addr relay')
 
@@ -26,12 +24,14 @@ class Relays(Enum):
     ERROR = Relay(Addr.CDH, 0)
 
 class Opcode(Enum):
-    RELAY_OFF = 0xC0
-    RELAY_ON = 0xC1
-    RELAY_SET_DELAYED = 0xCF
-    RELAY_SET_ALL = 0xCE
-    GET_ALL_RELAY_STATES = 0xC4
-    
+    RELAY_OFF = 0x10
+    RELAY_ON = 0x11
+    RELAY_GET = 0x12
+    RELAY_GET_ALL_STATES = 0x13
+    RELAY_ALL_OFF = 0x14
+    RELAY_ALL_ON = 0x15
+    RELAY_SET_ALL = 0x16
+
 OPCODE_MATCHER = {
 	op.PRESS_PROP_SET: Relays.PRESS_PROP,
 	op.OX_FILL_SET: Relays.OX_FILL,
@@ -47,7 +47,7 @@ OPCODE_MATCHER = {
 	op.OX_CC_DELAYED_SET: Relays.OX_CC,
 	op.PRESS_FILL_SET: Relays.PRESS_FILL,
 	op.IGNITION_SET: Relays.IGNITION,
-	op.IGNITE_FOR_TIME: Relays.IGNITION
+	# op.IGNITE_FOR_TIME: Relays.IGNITION
 }
 
 IS_NORMALLY_CLOSED = {
@@ -59,5 +59,6 @@ IS_NORMALLY_CLOSED = {
     Relays.FUEL_CC: True,
     Relays.OX_CC: True,
     Relays.PRESS_FILL: True,
-    Relays.IGNITION: True
+    Relays.IGNITION: True,
+    Relays.QD: True
 }
