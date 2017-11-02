@@ -24,9 +24,12 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
 
             addr = mcuCommand.pop(0)
             opcode = mcuCommand.pop(0)
-            response = sh.mcuHandler.sendDataToMCU(addr, opcode, mcuCommand)
+            response = sh.fcmHandler.sendDataToMCU(addr, opcode, mcuCommand)
+            responseTwo = sh.gcmHandler.sendDataToMCU(addr, opcode, mcuCommand)
+            response.extend(responseTwo)
 
             self.request.sendall(response)
+        # outside of while loop
         print("Client disconnected: {}".format(self.client_address[0]))
 
 def getServerThread(HOST, PORT):

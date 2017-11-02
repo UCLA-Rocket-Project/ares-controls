@@ -72,4 +72,5 @@ def compute_crc(input1):
 
     return crc8
 
-mcuHandler = SerialHandler("/dev/ttyACM0", timeout=0.5)
+fcmHandler = SerialHandler("/dev/ttyACM0", timeout=0.5)
+gcmHandler = SerialHandler("/dev/ttyACM1", timeout=0.5)
