@@ -54,6 +54,7 @@ class SerialHandler:
         crc_return_input = [return_message[0], return_message[1]]
         return_crc = compute_crc(crc_return_input)
         print("calculated on pi- return crc: {}".format(return_crc))
+        return return_message
 
 
 def compute_crc(input1):
@@ -71,4 +72,4 @@ def compute_crc(input1):
 
     return crc8
 
-mcuHandler = SerialHandler("COM7", timeout=0.5)
+mcuHandler = SerialHandler("/dev/ttyACM0", timeout=0.5)

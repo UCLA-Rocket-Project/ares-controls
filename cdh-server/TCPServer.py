@@ -1,4 +1,5 @@
-import socketserver as sh
+import socketserver
+import serialHandler as sh
 import commandHandler as ch
 from threading import Thread
 
@@ -11,8 +12,8 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
             self.data = self.request.recv(1024)
             if not self.data:
                 break
-            print("got data: " + self.data)
-            print("first byte: " + hex(ord(self.data[0])))
+            print("got data: " + self.data.hex())
+            print("first byte: " + hex(self.data[0]))
 
             mcuCommand = ch.handleCommand(self.data)
             print("MCU Command: {}".format(mcuCommand))
@@ -23,7 +24,7 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
 
             addr = mcuCommand.pop(0)
             opcode = mcuCommand.pop(0)
-            sh.mcuHandler.sendDataToMCU(addr, opcode, mcuCommand)
+            response = sh.mcuHandler.sendDataToMCU(addr, opcode, mcuCommand)
 
             self.request.sendall(response)
         print("Client disconnected: {}".format(self.client_address[0]))
