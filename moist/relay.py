@@ -31,8 +31,8 @@ QUICK_DISC = Switch(0x43, 0)
 IGNITE = Switch(0x41, 0)
 IGNITE_SAFETY = Switch(0x41, 0)
 
-IGNITE_INDEX = 6
-SAFETY_INDEX = 13
+IGNITE_INDEX = 13
+SAFETY_INDEX = 6
 
 MAP = {
     4: PRESS_PROP,
@@ -80,7 +80,7 @@ GPIO.setmode(GPIO.BCM)
 
 for pin in relay_pins:
     GPIO.setup(pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
-    GPIO.add_event_detect(pin, GPIO.BOTH, callback=my_callback, bouncetime=100)
+    GPIO.add_event_detect(pin, GPIO.BOTH, callback=my_callback, bouncetime=30)
 
 ENABLE_PIN = 19
 GPIO.setup(ENABLE_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
@@ -102,19 +102,23 @@ except socket.error as e:
 led = 0
 
 while True:
+    usingServer = getSwitch(IGNITE_INDEX)
+    
     value = getSwitch(ENABLE_PIN)
     if moistEnabled != value:
         print("Enabling MOIST" if value else "Disabling MOIST")
         moistEnabled = value
         led = 0
     
-    if(led == 0 and moistEnabled):
+    turnOnLED = (led < (5 if usingServer else 2.5))
+
+    if(turnOnLED and moistEnabled):
         GPIO.output(LED_PIN, 1)
     else:
         GPIO.output(LED_PIN, 0)
 
     led = led + 1
-    if(led > (1 if usingServer else 2)):
+    if(led > 10):
         led = 0
 
-    time.sleep(0.1 if getSwitch(SAFETY_INDEX) else 1)
+    time.sleep(0.02 if getSwitch(SAFETY_INDEX) else 0.2)
