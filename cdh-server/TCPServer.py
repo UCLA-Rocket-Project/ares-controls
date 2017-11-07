@@ -20,16 +20,17 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
 
             if(mcuCommand == ch.ERROR):
                 print("Error translating to MCU command")
+                self.request.sendall("Error bad request!")
                 continue
 
             addr = mcuCommand.pop(0)
             opcode = mcuCommand.pop(0)
-            mcuCommandTwo = list(mcuCommand)
-            response = bytearray(sh.fcmHandler.sendDataToMCU(addr, opcode, mcuCommand))
-            responseTwo = bytearray(sh.gcmHandler.sendDataToMCU(addr, opcode, mcuCommandTwo))
-            response.extend(responseTwo)
+            mcuCommandTwo = list(mcuCommand) # copy mcuCommand
 
-            self.request.sendall(response)
+            mcuResponse = sh.fcmHandler.sendDataToMCU(addr, opcode, mcuCommand)
+            tcpResponse = b'-'.join(response)
+
+            self.request.sendall(tcpResponse)
         # outside of while loop
         print("Client disconnected: {}".format(self.client_address[0]))
 
