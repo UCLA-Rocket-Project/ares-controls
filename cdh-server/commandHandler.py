@@ -38,27 +38,28 @@ def delayHandler(byteArray):
 def setValves(byteArray):
 	#print("Checked setValves")
 	array = [consts.Addr.FCM, consts.Opcode.RELAY_SET_ALL.value]
-	if not len(byteArray) == 8:
+	if not len(byteArray) == 9:
 		return ERROR
 	objects = [
-        consts.Relays.PRESS_PROP,
+                consts.Relays.PRESS_PROP,
 		consts.Relays.OX_FILL,
 		consts.Relays.PRESS_VENT,
 		consts.Relays.OX_VENT,
 		consts.Relays.FUEL_VENT,
 		consts.Relays.FUEL_CC,
-		consts.Relays.OX_CC
+		consts.Relays.OX_CC,
+                consts.Relays.OX_DUMP
 	]
 	for i in range(1, len(byteArray)):
 		valveStatus = byteArray[i]
 		commandObject = objects[i - 1]
 		if consts.IS_NORMALLY_CLOSED[commandObject]:
-				relayStatus = valveStatus
+		    relayStatus = valveStatus
 		else:
-			if valveStatus == CLOSE_VALVE:
-				relayStatus = RELAY_ON
-			else:
-				relayStatus = RELAY_OFF
+		    if valveStatus == CLOSE_VALVE:
+                        relayStatus = RELAY_ON
+		    else:
+                        relayStatus = RELAY_OFF
 		array.append(relayStatus)
 	return array
 
@@ -96,7 +97,10 @@ def handleCommand(byteArray):
 
 def getMCUCommand(cmd_opcode, byteArray):
     # TODO: check correct length
-    cmd_optype = op.OPCODE_TYPES[cmd_opcode];
+    if cmd_opcode in op.OPCODE_TYPES:
+        cmd_optype = op.OPCODE_TYPES[cmd_opcode]
+    else:
+        return ERROR
 
     if(cmd_optype == op.OpType.SETVALVE):
         return handleSetValve(cmd_opcode, byteArray)

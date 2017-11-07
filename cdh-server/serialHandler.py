@@ -48,12 +48,15 @@ class SerialHandler:
         self.con.write(toSend)
         return_message = self.con.read(1024)
 
+
+        print("return message: {}".format(return_message))
         if len(return_message) != 4:
               print("the return message has been corrupted")
-        print("return message: {}".format(return_message))
-        crc_return_input = [return_message[0], return_message[1]]
-        return_crc = compute_crc(crc_return_input)
-        print("calculated on pi- return crc: {}".format(return_crc))
+        else:
+            crc_return_input = [return_message[0], return_message[1]]
+            return_crc = compute_crc(crc_return_input)
+            print("calculated on pi- return crc: {}".format(return_crc))
+            
         return return_message
 
 
@@ -72,4 +75,5 @@ def compute_crc(input1):
 
     return crc8
 
-mcuHandler = SerialHandler("/dev/ttyACM0", timeout=0.5)
+fcmHandler = SerialHandler("/dev/ttyACM0", timeout=0.5)
+gcmHandler = SerialHandler("/dev/ttyACM1", timeout=0.5)
