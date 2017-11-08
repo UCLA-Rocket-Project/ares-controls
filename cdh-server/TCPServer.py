@@ -62,11 +62,10 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
         tcpResponse = b'-'.join(response)
         return True, tcpResponse # success, response
 
-def restartServer():
-    
 
 def getServerThread(HOST, PORT):
     socketserver.TCPServer.allow_reuse_address = True
     server = socketserver.TCPServer((HOST, PORT), TCPServerHandler)
-    t = Thread(target=server.serve_forever())
+    t = Thread(target=server.serve_forever)
+    print("TCP-SERVER> Created server thread at {}:{}".format(HOST, PORT))
     return t

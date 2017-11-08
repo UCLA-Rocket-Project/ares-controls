@@ -2,6 +2,13 @@
 import serial as pyserial
 import time
 
+
+
+serial_prefix = "/dev/serial/by-path/platform-3f980000.usb-usb-0:"
+RIGHT_PORTS = [serial_prefix + "1.4:1.0", serial_prefix + "1.5:1.0"]
+LEFT_PORTS = [serial_prefix + "1.2:1.0", serial_prefix + "1.3:1.0"]
+        
+
 class SerialHandler:
     def __init__(self, delay=0.5):
         self.delay = delay
@@ -15,12 +22,12 @@ class SerialHandler:
             newCon.reset_input_buffer()
             self.con.append(newCon)
         except pyserial.SerialException:
-            return false
-        return true
+            return False
+        return True
 
 
     def sendDataToMCUs(self, dest, opcode, data):
-        print("sending data: {}".format(data))
+        print("SERIAL-HANDLER> sending data: {}".format(data))
 
         adr_op = (dest & 0xc0) | (opcode & 0x3f)
         cont_code = (dest & 0xc0) | 0x3e
@@ -43,9 +50,9 @@ class SerialHandler:
         toSend.append(end_code)
         toSend.append(crc)
 
-        print("calculated on pi- sent crc: {}".format(crc))
-        print("sent {} bytes".format(len(toSend)))
-        print("sending bytes: {}".format(toSend))
+        print("SERIAL-HANDLER> calculated on pi- sent crc: {}".format(crc))
+        print("SERIAL-HANDLER> sent {} bytes".format(len(toSend)))
+        print("SERIAL_HANDLER> sending bytes: {}".format(toSend))
 
         # send data
         for con in self.con:
@@ -57,7 +64,7 @@ class SerialHandler:
         for con in self.con :
             messages.append(self.con.read(1024))
 
-        print("received messages: {}".format(messages))
+        print("SERIAL-HANDLER> received messages: {}".format(messages))
         return messages
 
     def getConnectedPorts(self):
@@ -78,7 +85,7 @@ class SerialHandler:
                     crc8 >>= 1
         return crc8
 
+mcuHandler = SerialHandler()
+
 def getHandler():
-    if not mcuHandler:
-        mcuHandler = SerialHandler()
     return mcuHandler

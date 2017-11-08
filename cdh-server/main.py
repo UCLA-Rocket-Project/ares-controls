@@ -2,15 +2,20 @@ import serialHandler
 import TCPServer
 
 
-serialPorts = ["/dev/ttyACM0", "/dev/ttyACM1"]
+serialPorts = serialHandler.RIGHT_PORTS
 
 for port in serialPorts:
-    result = serialHandler.getHandler().connect(port, timeout=0, delay=2)
+    result = serialHandler.getHandler().connect(port, timeout=0, wait=2)
     if result:
-        print("Successfully connected to device at port {}".format(port))
+        print("SERIAL> Successfully connected to device at port {}".format(port))
     else:
-        print("Error connecting to device at port {}".format(port))
+        print("SERIAL> Error connecting to device at port {}".format(port))
+
 
 serverThread = TCPServer.getServerThread('0.0.0.0', 9999)
-serverThread.daemon = true
+serverThread.daemon = True
 serverThread.start()
+
+print("TCP-SERVER> Started server")
+
+serverThread.join()
