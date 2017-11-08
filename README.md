@@ -1,3 +1,6 @@
+This site has been HACKED!!!
+- hello from the git tutorial :P
+
 # ares-control
 Control systems for the Ares rocket
 
