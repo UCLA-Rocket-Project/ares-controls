@@ -1,7 +1,10 @@
 import socketserver
-import serialHandler as sh
+import serialHandler
+import opcodes
 import commandHandler as ch
 from threading import Thread
+
+sh = serialHandler.getHandler()
 
 class TCPServerHandler(socketserver.BaseRequestHandler):
 
@@ -10,29 +13,57 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
         while(1):
             # self.request is the TCP socket connected to the client
             self.data = self.request.recv(1024)
-            if not self.data:
-                break
+            if not self.data: break # end connection
             print("got data: " + self.data.hex())
-            print("first byte: " + hex(self.data[0]))
 
-            mcuCommand = ch.handleCommand(self.data)
-            print("MCU Command: {}".format(mcuCommand))
+            #if cdhCommand:
+            if ((self.data[0] & 0xc0) == 0xc0):
+                success, response = handleCDHCommand(self.data)
+                if not success:
+                    print("Error handling CDH command")
+                self.request.sendall(response)
+            #if mcuCommand:
+            else:
+                success, response = handleMCUCommand(self.data)
+                if not success:
+                    print("Error handling MCU command")
+                self.request.sendall(response)
 
-            if(mcuCommand == ch.ERROR):
-                print("Error translating to MCU command")
-                self.request.sendall("Error bad request!")
-                continue
-
-            addr = mcuCommand.pop(0)
-            opcode = mcuCommand.pop(0)
-            mcuCommandTwo = list(mcuCommand) # copy mcuCommand
-
-            mcuResponse = sh.fcmHandler.sendDataToMCU(addr, opcode, mcuCommand)
-            tcpResponse = b'-'.join(response)
-
-            self.request.sendall(tcpResponse)
         # outside of while loop
         print("Client disconnected: {}".format(self.client_address[0]))
+
+    def handleCDHCommand(self, data):
+        opcode = data[0]
+        if opcode == opcodes.GET_CONNECTED_DEVICES:
+            deviceString = ", ".join(sh.getConnectedPorts())
+            return True, "Connected Devices: " + deviceString
+        elif opcode == opcodes.CONNECT_DEVICE:
+            try:
+                portBytes = data[1:data.index('\x00')]
+                port = ''.join(portBytes).decode('utf-8')
+                result = serialHandler.getHandler().connect(port)
+                return True, "Opening serial connection to port {}".format(port) \
+                    + "succeeded" if result else "failed"
+            except:
+                return False, "Unknown error processing data"
+        else:
+            return False, "Invalid CDH Command"
+
+    def handleMCUCommand(self, data):
+        mcuCommand = ch.handleCommand(data)
+        print("MCU Command: {}".format(mcuCommand))
+
+        if(mcuCommand == ch.ERROR):
+            return False, "Error bad request!" # success, response
+        addr = mcuCommand.pop(0)
+        opcode = mcuCommand.pop(0)
+
+        mcuResponse = sh.sendDataToMCUs(addr, opcode, mcuCommand)
+        tcpResponse = b'-'.join(response)
+        return True, tcpResponse # success, response
+
+def restartServer():
+    
 
 def getServerThread(HOST, PORT):
     socketserver.TCPServer.allow_reuse_address = True

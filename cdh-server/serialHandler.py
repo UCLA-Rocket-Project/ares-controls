@@ -2,19 +2,22 @@
 import serial as pyserial
 import time
 
-serialPorts = ["/dev/ttyACM0", "/dev/ttyACM1"]
-
 class SerialHandler:
-    def __init__(self, portNames, timeout=0, delay):
+    def __init__(self, delay=0.5):
         self.delay = delay
         self.con = []
-        for portName in portNames:
-            self.con.append(pyserial.Serial(portName, timeout=timeout))
-        for con in self.con:
-            con.flush()
-        time.sleep(2) # wait while arduinos reboot
-        for con in self.con:
-            con.reset_input_buffer()
+
+    def connect(self, serialPort, timeout=0, wait=2):
+        try:
+            newCon = pyserial.Serial(serialPort, timeout=timeout)
+            newCon.flush()
+            time.sleep(wait) # wait while arduinos reboot
+            newCon.reset_input_buffer()
+            self.con.append(newCon)
+        except pyserial.SerialException:
+            return false
+        return true
+
 
     def sendDataToMCUs(self, dest, opcode, data):
         print("sending data: {}".format(data))
@@ -22,7 +25,7 @@ class SerialHandler:
         adr_op = (dest & 0xc0) | (opcode & 0x3f)
         cont_code = (dest & 0xc0) | 0x3e
         end_code = (dest & 0xc0) | 0x3f
-        crc = compute_crc([adr_op] + data)
+        crc = self.compute_crc([adr_op] + data)
 
         toSend = []
         toSend.append(adr_op)
@@ -54,23 +57,28 @@ class SerialHandler:
         for con in self.con :
             messages.append(self.con.read(1024))
 
-        print("return messages: {}".format(messages))
+        print("received messages: {}".format(messages))
         return messages
 
+    def getConnectedPorts(self):
+        ports = []
+        for con in self.con:
+            ports.append(con.port)
+        return ports
 
-def compute_crc(input1):
-    crc8 = 0x00
+    def compute_crc(self, input1):
+        crc8 = 0x00
+        for pos in range(len(input1)):
+            crc8 ^= input1[pos]
+            for i in range(8,0,-1):
+                if ((crc8 & 0x01) !=0):
+                    crc8 >>= 1
+                    crc8 ^= 0x8c
+                else:
+                    crc8 >>= 1
+        return crc8
 
-    for pos in range(len(input1)):
-        crc8 ^= input1[pos]
-
-        for i in range(8,0,-1):
-            if ((crc8 & 0x01) !=0):
-                crc8 >>= 1
-                crc8 ^= 0x8c
-            else:
-                crc8 >>= 1
-
-    return crc8
-
-mcuHandler = SerialHandler(serialPorts, timeout=0)
+def getHandler():
+    if not mcuHandler:
+        mcuHandler = SerialHandler()
+    return mcuHandler
