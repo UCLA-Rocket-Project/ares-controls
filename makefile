@@ -12,3 +12,8 @@ cdhserv: cdh-server/*.py
 
 cdhserv-deploy: cdhserv
 	@cp bin/cdhserv /deploy/
+
+cdh-service-setup:
+	cp pi-service/cdhserv.service /lib/systemd/system/
+	chmod 644 /lib/systemd/system/cdhserv.service
+	systemctl daemon-reload
