@@ -9,28 +9,28 @@ sh = serialHandler.getHandler()
 class TCPServerHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
-        print("Connection from {}".format(self.client_address[0]))
+        print("  tcp #> Connection from {}".format(self.client_address[0]))
         while(1):
             # self.request is the TCP socket connected to the client
             self.data = self.request.recv(1024)
             if not self.data: break # end connection
-            print("got data: " + self.data.hex())
+            print("  tcp #> got data: " + self.data.hex())
 
             #if cdhCommand:
             if ((self.data[0] & 0xc0) == 0xc0):
-                success, response = handleCDHCommand(self.data)
+                success, response = self.handleCDHCommand(self.data)
                 if not success:
-                    print("Error handling CDH command")
+                    print("  tcph #> Error handling CDH command")
                 self.request.sendall(response)
             #if mcuCommand:
             else:
-                success, response = handleMCUCommand(self.data)
+                success, response = self.handleMCUCommand(self.data)
                 if not success:
-                    print("Error handling MCU command")
+                    print("  tcph #> Error handling MCU command")
                 self.request.sendall(response)
 
         # outside of while loop
-        print("Client disconnected: {}".format(self.client_address[0]))
+        print("  tcp #> Client disconnected: {}".format(self.client_address[0]))
 
     def handleCDHCommand(self, data):
         opcode = data[0]
@@ -51,7 +51,7 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
 
     def handleMCUCommand(self, data):
         mcuCommand = ch.handleCommand(data)
-        print("MCU Command: {}".format(mcuCommand))
+        print("  tcp #> MCU Command: {}".format(mcuCommand))
 
         if(mcuCommand == ch.ERROR):
             return False, "Error bad request!" # success, response
@@ -59,7 +59,10 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
         opcode = mcuCommand.pop(0)
 
         mcuResponse = sh.sendDataToMCUs(addr, opcode, mcuCommand)
-        tcpResponse = b'-'.join(response)
+        tcpResponse = b'-'.join(mcuResponse)
+        if(tcpResponse == b''):
+            print("  tcp #> Nothing from MCU's")
+            tcpResponse = b'no response from MCUs'
         return True, tcpResponse # success, response
 
 
@@ -67,5 +70,5 @@ def getServerThread(HOST, PORT):
     socketserver.TCPServer.allow_reuse_address = True
     server = socketserver.TCPServer((HOST, PORT), TCPServerHandler)
     t = Thread(target=server.serve_forever)
-    print("TCP-SERVER> Created server thread at {}:{}".format(HOST, PORT))
+    print("  tcp #> Created server thread at {}:{}".format(HOST, PORT))
     return t

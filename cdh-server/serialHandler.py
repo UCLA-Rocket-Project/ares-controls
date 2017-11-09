@@ -27,7 +27,7 @@ class SerialHandler:
 
 
     def sendDataToMCUs(self, dest, opcode, data):
-        print("SERIAL-HANDLER> sending data: {}".format(data))
+        print("  serial @> sending data: {}".format(data))
 
         adr_op = (dest & 0xc0) | (opcode & 0x3f)
         cont_code = (dest & 0xc0) | 0x3e
@@ -50,9 +50,9 @@ class SerialHandler:
         toSend.append(end_code)
         toSend.append(crc)
 
-        print("SERIAL-HANDLER> calculated on pi- sent crc: {}".format(crc))
-        print("SERIAL-HANDLER> sent {} bytes".format(len(toSend)))
-        print("SERIAL_HANDLER> sending bytes: {}".format(toSend))
+        print("  serial @> calculated on pi- sent crc: {}".format(crc))
+        print("  serial @> sent {} bytes".format(len(toSend)))
+        print("  serial @> sending bytes: {}".format(toSend))
 
         # send data
         for con in self.con:
@@ -62,9 +62,9 @@ class SerialHandler:
 
         messages = []
         for con in self.con :
-            messages.append(self.con.read(1024))
+            messages.append(con.read(1024))
 
-        print("SERIAL-HANDLER> received messages: {}".format(messages))
+        print("  serial @> received messages: {}".format(messages))
         return messages
 
     def getConnectedPorts(self):
