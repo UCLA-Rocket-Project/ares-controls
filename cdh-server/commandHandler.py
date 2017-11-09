@@ -36,7 +36,6 @@ def delayHandler(byteArray):
     return [commandObject.value.addr, consts.Opcode.RELAY_SET_DELAYED.value, commandObject.value.relay, relayStatus, byteArray[2], byteArray[3]]
 
 def setValves(byteArray):
-	#print("Checked setValves")
 	array = [consts.Addr.FCM, consts.Opcode.RELAY_SET_ALL.value]
 	if not len(byteArray) == 9:
 		return ERROR

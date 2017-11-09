@@ -1,6 +1,10 @@
 from enum import Enum
 from collections import namedtuple
 
+#CDH
+GET_CONNECTED_DEVICES = 0xc0
+CONNECT_DEVICE = 0xc1
+
 #FCM
 VALVES_SET_ALL = 0x30
 VALVES_GET_ALL = 0x31

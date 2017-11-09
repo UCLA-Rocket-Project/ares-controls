@@ -2,78 +2,90 @@
 import serial as pyserial
 import time
 
+
+
+serial_prefix = "/dev/serial/by-path/platform-3f980000.usb-usb-0:"
+RIGHT_PORTS = [serial_prefix + "1.4:1.0", serial_prefix + "1.5:1.0"]
+LEFT_PORTS = [serial_prefix + "1.2:1.0", serial_prefix + "1.3:1.0"]
+        
+
 class SerialHandler:
-    def __init__(self, portName, timeout=10):
-        self.con = pyserial.Serial(portName, timeout=timeout)
-        self.con.flush()
-        time.sleep(2)
-        self.con.reset_input_buffer()
+    def __init__(self, delay=0.5):
+        self.delay = delay
+        self.con = []
 
-    def sendDataToMCU(self, dest, opcode, data):
-        print("sending data: {}".format(data))
+    def connect(self, serialPort, timeout=0, wait=2):
+        try:
+            newCon = pyserial.Serial(serialPort, timeout=timeout)
+            newCon.flush()
+            time.sleep(wait) # wait while arduinos reboot
+            newCon.reset_input_buffer()
+            self.con.append(newCon)
+        except pyserial.SerialException:
+            return False
+        return True
 
-        toSend = []
-        bytes_sent = 0
+
+    def sendDataToMCUs(self, dest, opcode, data):
+        print("  serial @> sending data: {}".format(data))
 
         adr_op = (dest & 0xc0) | (opcode & 0x3f)
         cont_code = (dest & 0xc0) | 0x3e
         end_code = (dest & 0xc0) | 0x3f
+        crc = self.compute_crc([adr_op] + data)
 
+        toSend = []
         toSend.append(adr_op)
         toSend.append(data[0])
 
         if len(data) > 1:
             for i,byte in enumerate(data):
-                if i == 0:
+                if i == 0: #sent with adr_op
                     continue
                 if i == len(data):
                     break
                 toSend.append(cont_code)
                 toSend.append(byte)
-                bytes_sent += 2
 
         toSend.append(end_code)
-
-        data.insert(0, adr_op)
-        crc = compute_crc(data)
-
         toSend.append(crc)
-        print("calculated on pi- sent crc: {}".format(crc))
-        bytes_sent += 4
 
-        print("sent {} bytes".format(bytes_sent))
-        print("sending bytes: {}".format(toSend))
+        print("  serial @> calculated on pi- sent crc: {}".format(crc))
+        print("  serial @> sent {} bytes".format(len(toSend)))
+        print("  serial @> sending bytes: {}".format(toSend))
 
         # send data
-        self.con.write(toSend)
-        return_message = self.con.read(1024)
+        for con in self.con:
+            con.write(toSend)
 
+        time.sleep(self.delay)
 
-        print("return message: {}".format(return_message))
-        if len(return_message) != 4:
-              print("the return message has been corrupted")
-        else:
-            crc_return_input = [return_message[0], return_message[1]]
-            return_crc = compute_crc(crc_return_input)
-            print("calculated on pi- return crc: {}".format(return_crc))
-            
-        return return_message
+        messages = []
+        for con in self.con :
+            messages.append(con.read(1024))
 
+        print("  serial @> received messages: {}".format(messages))
+        return messages
 
-def compute_crc(input1):
-    crc8 = 0x00
+    def getConnectedPorts(self):
+        ports = []
+        for con in self.con:
+            ports.append(con.port)
+        return ports
 
-    for pos in range(len(input1)):
-        crc8 ^= input1[pos]
+    def compute_crc(self, input1):
+        crc8 = 0x00
+        for pos in range(len(input1)):
+            crc8 ^= input1[pos]
+            for i in range(8,0,-1):
+                if ((crc8 & 0x01) !=0):
+                    crc8 >>= 1
+                    crc8 ^= 0x8c
+                else:
+                    crc8 >>= 1
+        return crc8
 
-        for i in range(8,0,-1):
-            if ((crc8 & 0x01) !=0):
-                crc8 >>= 1
-                crc8 ^= 0x8c
-            else:
-                crc8 >>= 1
+mcuHandler = SerialHandler()
 
-    return crc8
-
-fcmHandler = SerialHandler("/dev/ttyACM0", timeout=0.5)
-gcmHandler = SerialHandler("/dev/ttyACM1", timeout=0.5)
+def getHandler():
+    return mcuHandler
