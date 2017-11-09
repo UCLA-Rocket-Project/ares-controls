@@ -35,19 +35,22 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
     def handleCDHCommand(self, data):
         opcode = data[0]
         if opcode == opcodes.GET_CONNECTED_DEVICES:
-            deviceString = ", ".join(sh.getConnectedPorts())
-            return True, "Connected Devices: " + deviceString
+            deviceString = ', '.join(sh.getConnectedPorts())
+            return True, str.encode('[' + deviceString + ']')
+
         elif opcode == opcodes.CONNECT_DEVICE:
             try:
-                portBytes = data[1:data.index('\x00')]
-                port = ''.join(portBytes).decode('utf-8')
+                port = data[1:data.index(b'\x00')].decode('ascii')
+                print('   cdh-command #> attempting serial connection to {}'.format(port))
                 result = serialHandler.getHandler().connect(port)
-                return True, "Opening serial connection to port {}".format(port) \
-                    + "succeeded" if result else "failed"
-            except:
-                return False, "Unknown error processing data"
+                print('   cdh-command #> connection attempt success? -> {}'.format(result))
+                return True, str.encode('Opening serial connection to port {} success? {}' \
+                    .format(port, result))
+            except Exception as e:
+                print('   cdh-command #> handling exception: {}'.format(e))
+                return False, str.encode('Unknown error processing data: ' + e)
         else:
-            return False, "Invalid CDH Command"
+            return False, b'Invalid CDH Opcode'
 
     def handleMCUCommand(self, data):
         mcuCommand = ch.handleCommand(data)
