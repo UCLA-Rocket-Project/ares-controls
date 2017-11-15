@@ -9,9 +9,10 @@ def getRelayFromOpcode(command):
 	return None
 
 def getRelayOpcode(turnOn):
-	if turnOn:
+    if turnOn:
         return consts.Opcode.RELAY_ON.value
-	return consts.Opcode.RELAY_OFF.value
+    else:
+        return consts.Opcode.RELAY_OFF.value
 
 def handleCommand(byteArray):
     cmd_opcode = byteArray[0];
@@ -52,19 +53,19 @@ def handleSetBulkCommand(cmd_opcode, byteArray):
     return ERROR
 
 def setValves(byteArray):
-	array = [consts.Addr.FCM, consts.Opcode.RELAY_SET_ALL.value]
-	if not len(byteArray) == 9:
-		return ERROR
+    array = [consts.Addr.FCM, consts.Opcode.RELAY_SET_ALL.value]
+    if not len(byteArray) == 9:
+        return ERROR
 
-	for i in range(1, len(byteArray)):
-		cmd_direction = byteArray[i]
+    for i in range(1, len(byteArray)):
+        cmd_direction = byteArray[i]
         cmd_relay = consts.FCMRelays[i - 1]
 
         shouldTurnRelayOn = (cmd_direction == consts.IS_NORMALLY_CLOSED[cmd_relay])
         relayCommand = getRelayOpcode(shouldTurnRelayOn)
-		array.append(relayCommand)
+        array.append(relayCommand)
 
-	return array
+    return array
 
 def handleDelayCommand(cmd_opcode, byteArray):
     cmd_relay = getRelayFromOpcode(cmd_opcode)
