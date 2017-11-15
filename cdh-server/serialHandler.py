@@ -56,6 +56,7 @@ class SerialHandler:
 
         # send data
         for con in self.con:
+            con.reset_input_buffer()
             con.write(toSend)
 
         time.sleep(self.delay)
@@ -85,7 +86,7 @@ class SerialHandler:
                     crc8 >>= 1
         return crc8
 
-mcuHandler = SerialHandler()
+mcuHandler = SerialHandler(delay=0.02)
 
 def getHandler():
     return mcuHandler

@@ -4,8 +4,8 @@ import TCPServer
 
 def main():
 
-    # serialPorts = serialHandler.RIGHT_PORTS
-    serialPorts = []
+    serialPorts = serialHandler.RIGHT_PORTS
+    # serialPorts = []
 
     print('''
           ___      .______       _______     _______.     ______  _______   __    __  

@@ -69,9 +69,9 @@ def handleSetBulkCommand(cmd_opcode, byteArray):
         return [consts.Addr.FCM, consts.Opcode.RELAY_GET_ALL_STATES.value]
     return ERROR
 
-def handleQD(cmd_opcode):
+def handleQD(cmd_opcode, byteArray):
     cmd_relay = consts.Relays.QD
-    return [cmd_relay.value.addr, getRelayOpcode(1), cmd_relay.value.relay]
+    return [cmd_relay.value.addr, getRelayOpcode(byteArray[1]), cmd_relay.value.relay]
 
 def handleSetValve(cmd_opcode, byteArray):
     cmd_direction = byteArray[1] # 0x01: open, 0x00: close
@@ -108,6 +108,6 @@ def getMCUCommand(cmd_opcode, byteArray):
         return handleSetBulkCommand(cmd_opcode, byteArray)
 
     elif(cmd_optype == op.OpType.QD):
-        return handleQD(byteArray);
+        return handleQD(cmd_opcode, byteArray);
 
     return ERROR
