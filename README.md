@@ -1,58 +1,62 @@
-# ares-control
-Control systems for the Ares rocket
+ares-controls :rocket:
+=============
+Control systems software for the Ares rocket
 
-### MCU Command Requests
+MOIST:
+------
+_**M**ission **O**perator **I**nterface: **S**witch **T**erminal_
 
-This is gonna change, we're using CRC's now
+##### Features
+- Switch board, with switches for each valve
+- Ignition and ignition safety digital inputs
+- MOIST Enable digital input/switch
+- LED indicator for network status and arming
+- Ethernet port, internal power (power bank)
 
-Command requests are sent over Serial in 4-byte packets
+##### Software Features
+- Callback function to handle GPIO (switch) events
+- TCP Client connecting to CDH controls server
+    - Socket client running asynchronously, on a separate thread
+- Systemd service to run script on startup
 
-| Byte 1             |   Byte 2       |   Byte 3     |   Byte 4  |
-|--------------------|----------------|--------------|-----------|
-|   Target Address   | Operation Code | Data/Payload | Stop Byte |
-|   `0x01`           |  `0xC1`        | `0x00`       |  `0xFF`   |
+##### Planned
+- [ ] Clean logging and debug output
+- [ ] Exception handling software (restart MOIST on error)
+- [ ] Built-in battery charging port
+- [ ] Field debugging/visualization output
+- [ ] Heartbeat between CDH and MOIST
 
-#### Target Address
+CDH-server:
+------------------
+_**C**ommand and **D**ata **H**andling server_
 
-| Value | Target   |
-|-------|----------|
-| `0xA1` | FCM |
-| `0xA2` | GCM |
-| `0xAC` | CDH |
+##### Features
+- TCP Server for receiving commands
+    - Handles MCU and Maintenance commands (connect to serial device, list serial devices, etc)
+- Serial Master functionality to translate and send commands to FCM/GCM
+    - Supports multiple device connections with addressing, on 1+ serial buses
+    - Connects to devices by physical port location, not dynamically assigned IDs
 
-#### Operation Code
+##### Planned
+- [ ] Handle multiple concurrent connections on separate threads, test current functionality
+- [ ] Exception handling software and hardware watchdog (restart CDH on error)
+- [ ] Error code and TCP response standardization
+- [ ] Field debugging/visualization output
+- [ ] Basic maintenance commands for serial connections/listing
+- [ ] Expansion of Maintenance commands (restart server, etc)
+- [ ] Heartbeat between CDH and MOIST
 
-| Value | Command   |
-|-------|----------|
-| `0xC0` | Turn off relay  |
-| `0xC1` | Turn on relay   |
-| `0xC3` | Get relay state |
+FCM-mcu:
+-----------------
+_**F**light **C**ontrol **M**odule - microcontroller unit_
 
-#### Data byte
-1-byte representation of the Relay ID
+##### Features
+- Receives commands over serial/TTY to turn on/off relays
+    - Error checking CRC-8 to handle bad commands or corrupted payloads
 
-#### Stop byte
-All data transmissions end with the stop byte, `0xFF`
-
-### MCU Response
-
-Possible responses:
-
-| Byte 1             |   Byte 2       |   Byte 3     |   Byte 4  |
-|--------------------|----------------|--------------|-----------|
-|   Target Address   | Operation Code | Data/Payload | Stop Byte |
-|   Target Address   | Operation Code | Error Code   | Stop Byte |
-|   Target Address   | Error Code     | Error Code   | Stop Byte |
-
-#### Return values
-Successful operations return a 4-byte packet, with the same opcode that was received
-in addition to the relay's current state (0 or 1)
-
-#### Errors
-If an error occurs, an error code is returned in Byte 3. Additionally, if the opcode is invalid then the same error code is also returned in byte 2.
-
-| Value | Command   |
-|-------|----------|
-| `0xE0` | Unknown error/incorrectly formatted request  |
-| `0xEC` | Invalid opcode   |
-| `0xE1` | Invalid parameter/data byte |
+##### Planned
+- [ ] Standalone Arduino/ATMega circuitboard with FTDI usb-uart chip
+- [ ] Safe modes for resetting to default states after a timeout
+- [ ] Delayed commands/task scheduler
+- [ ] Store relay pin mapping and address to EEPROM
+    - [ ] Commands to update mapping and address over serial
