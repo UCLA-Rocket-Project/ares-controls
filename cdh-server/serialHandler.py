@@ -2,12 +2,9 @@
 import serial as pyserial
 import time
 
-
-
 serial_prefix = "/dev/serial/by-path/platform-3f980000.usb-usb-0:"
 RIGHT_PORTS = [serial_prefix + "1.4:1.0", serial_prefix + "1.5:1.0"]
 LEFT_PORTS = [serial_prefix + "1.2:1.0", serial_prefix + "1.3:1.0"]
-        
 
 class SerialHandler:
     def __init__(self, delay=0.5):
@@ -27,7 +24,7 @@ class SerialHandler:
 
 
     def sendDataToMCUs(self, dest, opcode, data):
-        print("  serial @> sending data: {}".format(data))
+        print("  serial @> sending opcode {} to {} with payload: {}".format(dest, opcode, data))
 
         adr_op = (dest & 0xc0) | (opcode & 0x3f)
         cont_code = (dest & 0xc0) | 0x3e
@@ -50,12 +47,11 @@ class SerialHandler:
         toSend.append(end_code)
         toSend.append(crc)
 
-        print("  serial @> calculated on pi- sent crc: {}".format(crc))
-        print("  serial @> sent {} bytes".format(len(toSend)))
-        print("  serial @> sending bytes: {}".format(toSend))
+        print("  serial @> sent bytes: {}".format(toSend))
 
         # send data
         for con in self.con:
+            con.reset_output_buffer()
             con.reset_input_buffer()
             con.write(toSend)
 
@@ -65,7 +61,7 @@ class SerialHandler:
         for con in self.con :
             messages.append(con.read(1024))
 
-        print("  serial @> received messages: {}".format(messages))
+        print("  serial @> received bytes: {}".format(messages))
         return messages
 
     def getConnectedPorts(self):

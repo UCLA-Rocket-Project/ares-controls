@@ -10,6 +10,18 @@ class Addr:
 
 Relay = namedtuple('Relay', 'addr relay')
 
+
+FCMRelays = [
+    consts.Relays.PRESS_PROP,
+    consts.Relays.OX_FILL,
+    consts.Relays.PRESS_VENT,
+    consts.Relays.OX_VENT,
+    consts.Relays.FUEL_VENT,
+    consts.Relays.FUEL_CC,
+    consts.Relays.OX_CC,
+    consts.Relays.OX_DUMP
+]
+
 class Relays(Enum):
     PRESS_PROP = Relay(Addr.FCM, 0)
     OX_FILL = Relay(Addr.FCM, 1)
@@ -22,7 +34,6 @@ class Relays(Enum):
     PRESS_FILL = Relay(Addr.GCM, 0)
     IGNITION = Relay(Addr.GCM, 1)
     QD = Relay(Addr.GCM, 2)
-    ERROR = Relay(Addr.CDH, 0)
 
 class Opcode(Enum):
     RELAY_OFF = 0x10
@@ -48,7 +59,7 @@ OPCODE_MATCHER = {
 	op.OX_CC_DELAYED_SET: Relays.OX_CC,
 	op.PRESS_FILL_SET: Relays.PRESS_FILL,
 	op.IGNITION_SET: Relays.IGNITION,
-        op.OX_DUMP_SET: Relays.OX_DUMP
+    op.OX_DUMP_SET: Relays.OX_DUMP
 	# op.IGNITE_FOR_TIME: Relays.IGNITION
 }
 
