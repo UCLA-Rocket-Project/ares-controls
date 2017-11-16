@@ -20,10 +20,11 @@ def sendFromQueue(queue):
             received = sock.recv(1024)
 
             if not received:
+                print("No data received: check socket connection")
                 break
 
             print("Received: {}".format(received))
 
-    print("Socket disconnection closed")
+    print("Socket connection closed")
 
 
