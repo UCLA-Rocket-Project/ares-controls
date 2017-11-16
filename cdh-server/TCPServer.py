@@ -57,7 +57,7 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
         print("  tcp #> MCU Command: {}".format(mcuCommand))
 
         if(mcuCommand == ch.ERROR):
-            return False, "Error bad request!" # success, response
+            return False, b'Error bad request!' # success, response
         addr = mcuCommand.pop(0)
         opcode = mcuCommand.pop(0)
 
