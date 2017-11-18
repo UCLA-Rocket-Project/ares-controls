@@ -97,6 +97,7 @@ usingServer = True
 try:
     serv.connect('arescdhbeta', 9999)
     clientProcess.start()
+    print("connected to server!")
 except socket.error as e:
     print("Error starting connection to server, code ", e)
     usingServer = False
@@ -104,9 +105,6 @@ except socket.error as e:
 led = 0
 
 while True:
-    usingServer = getSwitch(IGNITE_INDEX)
-    
-
     value = getSwitch(ENABLE_PIN)
     if moistEnabled != value:
         print("Enabling MOIST" if value else "Disabling MOIST")
@@ -115,7 +113,7 @@ while True:
     
     turnOnLED = (led < (5 if usingServer else 2.5))
 
-    if(turnOnLED and moistEnabled):
+    if turnOnLED and moistEnabled:
         GPIO.output(LED_PIN, 1)
     else:
         GPIO.output(LED_PIN, 0)
