@@ -17,3 +17,20 @@ cdh-service-setup:
 	cp pi-service/cdhserv.service /lib/systemd/system/
 	chmod 644 /lib/systemd/system/cdhserv.service
 	systemctl daemon-reload
+
+moist-client: moist/*.py
+	@echo "Making MOIST client"
+	${MKDIR_BIN}
+	@cd moist && zip -r -q ../bin/moist-temp.zip *
+	@echo '#!/usr/bin/env python3' | cat - bin/moist-temp.zip > bin/moist
+	@rm bin/moist-temp.zip
+	@${EXEC_PERMS} bin/moist
+	@echo "Created executable bin/moist"
+       	
+moist-deploy: moist-client
+	@cp bin/moist /deploy/
+
+moist-service-setup:
+	cp pi-service/moist.service /lib/systemd/system/
+	chmod 644 /lib/systemd/system/moist.service
+	systemctl daemon-reload
