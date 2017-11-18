@@ -19,7 +19,7 @@ $> sudo systemctl start moist.service # Start service
 $> sudo systemctl enable moist.service # Start service every time we boot up
 $> sudo systemctl disable moist.service # Disable auto-run of service on startup
 ```
-Currently, the systemd service implementation does not support printing to the console or a log file. To run the program with console output, run either `/deploy/moist` or `ares-controls/bin/moist` or `ares-controls/moist/__main__.py`
+> Currently, the systemd service implementation does not support printing to the console or a log file. To run the program with console output, run either `/deploy/moist` or `ares-controls/bin/moist` or `ares-controls/moist/__main__.py`
 
 ##### Features
 - Switch board, with switches for each valve
@@ -58,7 +58,7 @@ $> sudo systemctl start cdhserv.service # Start service
 $> sudo systemctl enable cdhserv.service # Start service every time we boot up
 $> sudo systemctl disable cdhserv.service # Disable auto-run of service on startup
 ```
-Currently, the systemd service implementation does not support printing to the console or a log file. To run the program with console output, run either `/deploy/cdhserv` or `ares-controls/bin/cdhserv` or `ares-controls/cdh-server/__main__.py`
+> Currently, the systemd service implementation does not support printing to the console or a log file. To run the program with console output, run either `/deploy/cdhserv` or `ares-controls/bin/cdhserv` or `ares-controls/cdh-server/__main__.py`
 
 ##### Features
 - TCP Server for receiving commands
