@@ -58,7 +58,8 @@ OPCODE_MATCHER = {
 	op.OX_CC_DELAYED_SET: Relays.OX_CC,
 	op.PRESS_FILL_SET: Relays.PRESS_FILL,
 	op.IGNITION_SET: Relays.IGNITION,
-    op.OX_DUMP_SET: Relays.OX_DUMP
+        op.OX_DUMP_SET: Relays.OX_DUMP,
+        op.QD_SET: Relays.QD
 	# op.IGNITE_FOR_TIME: Relays.IGNITION
 }
 
