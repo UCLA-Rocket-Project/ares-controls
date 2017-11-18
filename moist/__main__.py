@@ -13,6 +13,7 @@ def sendData(opcode, data):
     toSend.extend(data)
     dataQueue.put(toSend)
     print("Put data: 0x{}".format(bytearray(toSend).hex()))
+    print("")
 
 
 Switch = namedtuple('Switch', 'opcode is_no')
@@ -36,14 +37,14 @@ SAFETY_INDEX = 6
 
 MAP = {
     4: PRESS_PROP,
-    2: OX_FILL,
+    3: OX_FILL,
     17: OX_DUMP,
     27: PRESS_VENT,
     11: OX_VENT,
     10: FUEL_VENT,
     22: FUEL_CC,
     9: OX_CC,
-    3: PRESS_FILL,
+    2: PRESS_FILL,
     5: QUICK_DISC,
     IGNITE_INDEX: IGNITE,
     SAFETY_INDEX: IGNITE_SAFETY,
@@ -65,8 +66,7 @@ def my_callback(channel):
     switch_in = getSwitch(channel) 
     switch = MAP[channel]
 
-    print("channel: ", channel)
-    print("input: ", switch_in)
+    print("channel:", channel, "input:", switch_in)
 
     if(switch == IGNITE or switch == IGNITE_SAFETY):
         output = (1 if (getSwitch(IGNITE_INDEX) and getSwitch(SAFETY_INDEX)) else 0)
@@ -80,7 +80,7 @@ GPIO.setmode(GPIO.BCM)
 
 for pin in relay_pins:
     GPIO.setup(pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
-    GPIO.add_event_detect(pin, GPIO.BOTH, callback=my_callback, bouncetime=30)
+    GPIO.add_event_detect(pin, GPIO.BOTH, callback=my_callback, bouncetime=25)
 
 ENABLE_PIN = 19
 GPIO.setup(ENABLE_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
@@ -88,12 +88,14 @@ GPIO.setup(ENABLE_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 LED_PIN = 26
 GPIO.setup(LED_PIN, GPIO.OUT)
 
+
+
 #main begins here
 clientProcess = Process(target=serv.sendFromQueue, args=(dataQueue,))
 usingServer = True
 
 try:
-    serv.connect('arescdh', 9999)
+    serv.connect('arescdhbeta', 9999)
     clientProcess.start()
 except socket.error as e:
     print("Error starting connection to server, code ", e)
@@ -104,6 +106,7 @@ led = 0
 while True:
     usingServer = getSwitch(IGNITE_INDEX)
     
+
     value = getSwitch(ENABLE_PIN)
     if moistEnabled != value:
         print("Enabling MOIST" if value else "Disabling MOIST")

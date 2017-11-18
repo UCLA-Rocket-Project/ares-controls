@@ -1,0 +1,10 @@
+[Unit]
+Description=ARES MOIST Interface
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/deploy/moist
+
+[Install]
+WantedBy=multi-user.target
