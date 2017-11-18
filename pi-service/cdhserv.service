@@ -1,0 +1,11 @@
+[Unit]
+Description=Python server for Ares CDH Controls
+After=multi-user.target
+
+[Service]
+Type=idle
+ExecStart=/deploy/cdhserv
+
+[Install]
+WantedBy=multi-user.target
+

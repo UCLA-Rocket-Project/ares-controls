@@ -61,6 +61,7 @@ void loop () {
     if ((byte_buffer[0] & addressMask) == ADDRESS) {
       nextOpCode = byte_buffer[0] & opCodeMask;
       int opCodeResult = processOpCode(nextOpCode);
+
       if (opCodeResult != 3) {
         byte_buffer[1] = Serial.read();
       }
@@ -108,14 +109,6 @@ void loop () {
         }
       }
     }
-    else {
-      if ((byte_buffer[0] & opCodeMask) == 0x1d) {
-        byte_buffer[1] = Serial.read();
-        if (byte_buffer[1] == isFCMorGCM) {
-          sendOverSerial2(0x01, ADDRESS);
-        }
-      }
-    }
   }
 }
 
@@ -160,21 +153,21 @@ int processOpCode (byte opCode) {
    */
    int idxAtOpCode  = -1;
    bool validOpCode = false;
-   
+
    for (int i = 0; i < numOpCodes; i++) {
      if (opCode == opCodeList[i]) {
        validOpCode = true;
        idxAtOpCode = i;
      }
    }
-   
+
    if (idxAtOpCode > -1 && idxAtOpCode < 13) {
     expectedDataLength = opCodeLengths[idxAtOpCode];
    }
    else  if (idxAtOpCode = -1) {
     expectedDataLength == -1;
    }
-   
+
    if (validOpCode) {
     if (opCode == opCodeList[13] && currentDataIdx > 0) {
       return 1;
@@ -194,7 +187,7 @@ int processOpCode (byte opCode) {
 // https://docs.google.com/spreadsheets/d/1r0zNM0y-FEgeVTTzpJzNjrXxf3hs2GVzCn1geaSeYOE/edit#gid=1305699077 check for intended responses to op codes
 void processCommand (byte currentCommand[]) {
   byte opCode = currentCommand[0] & 0x3f;
-  
+
   switch (opCode) {
     case opCodeList[0]:
     setRelay(currentCommand[1], 1);

@@ -22,7 +22,6 @@ class Relays(Enum):
     PRESS_FILL = Relay(Addr.GCM, 0)
     IGNITION = Relay(Addr.GCM, 1)
     QD = Relay(Addr.GCM, 2)
-    ERROR = Relay(Addr.CDH, 0)
 
 class Opcode(Enum):
     RELAY_OFF = 0x10
@@ -32,6 +31,17 @@ class Opcode(Enum):
     RELAY_ALL_OFF = 0x14
     RELAY_ALL_ON = 0x15
     RELAY_SET_ALL = 0x16
+
+FCMRelays = [
+    Relays.PRESS_PROP,
+    Relays.OX_FILL,
+    Relays.PRESS_VENT,
+    Relays.OX_VENT,
+    Relays.FUEL_VENT,
+    Relays.FUEL_CC,
+    Relays.OX_CC,
+    Relays.OX_DUMP
+]
 
 OPCODE_MATCHER = {
 	op.PRESS_PROP_SET: Relays.PRESS_PROP,
@@ -48,7 +58,7 @@ OPCODE_MATCHER = {
 	op.OX_CC_DELAYED_SET: Relays.OX_CC,
 	op.PRESS_FILL_SET: Relays.PRESS_FILL,
 	op.IGNITION_SET: Relays.IGNITION,
-        op.OX_DUMP_SET: Relays.OX_DUMP
+    op.OX_DUMP_SET: Relays.OX_DUMP
 	# op.IGNITE_FOR_TIME: Relays.IGNITION
 }
 

@@ -3,83 +3,39 @@ import mcuconsts as consts
 
 ERROR = [consts.Addr.CDH, 0xe1]
 
-OPEN_VALVE = 0x01
-CLOSE_VALVE = 0x00
-
-RELAY_ON = 0x01
-RELAY_OFF = 0x00
-
 def getRelayFromOpcode(command):
 	if command in consts.OPCODE_MATCHER:
 		return consts.OPCODE_MATCHER[command]
-	return consts.Relays.ERROR
+	return None
 
 def getRelayOpcode(turnOn):
-	if turnOn:
-		return consts.Opcode.RELAY_ON.value
-	return consts.Opcode.RELAY_OFF.value
+    if turnOn:
+        return consts.Opcode.RELAY_ON.value
+    else:
+        return consts.Opcode.RELAY_OFF.value
 
-def delayHandler(byteArray):
-    commandObject = getRelayFromOpcode(command)
-    if not len(byteArray) == 4:
+def handleCommand(byteArray):
+    cmd_opcode = byteArray[0];
+
+    if cmd_opcode in op.OPCODE_TYPES:
+        cmd_optype = op.OPCODE_TYPES[cmd_opcode]
+    else:
         return ERROR
 
-    valveStatus = byteArray[1]
+    if(cmd_optype == op.OpType.SETVALVE):
+        return handleSetValveCommand(cmd_opcode, byteArray)
 
-    if consts.IS_NORMALLY_CLOSED[commandObject]:
-        relayStatus = valveStatus
-    else:
-        if valveStatus == CLOSE_VALVE:
-            relayStatus = RELAY_ON
-        else:
-            relayStatus = RELAY_OFF
-    return [commandObject.value.addr, consts.Opcode.RELAY_SET_DELAYED.value, commandObject.value.relay, relayStatus, byteArray[2], byteArray[3]]
+    elif(cmd_optype == op.OpType.SETBULK):
+        return handleSetBulkCommand(cmd_opcode, byteArray)
 
-def setValves(byteArray):
-	#print("Checked setValves")
-	array = [consts.Addr.FCM, consts.Opcode.RELAY_SET_ALL.value]
-	if not len(byteArray) == 9:
-		return ERROR
-	objects = [
-                consts.Relays.PRESS_PROP,
-		consts.Relays.OX_FILL,
-		consts.Relays.PRESS_VENT,
-		consts.Relays.OX_VENT,
-		consts.Relays.FUEL_VENT,
-		consts.Relays.FUEL_CC,
-		consts.Relays.OX_CC,
-                consts.Relays.OX_DUMP
-	]
-	for i in range(1, len(byteArray)):
-		valveStatus = byteArray[i]
-		commandObject = objects[i - 1]
-		if consts.IS_NORMALLY_CLOSED[commandObject]:
-		    relayStatus = valveStatus
-		else:
-		    if valveStatus == CLOSE_VALVE:
-                        relayStatus = RELAY_ON
-		    else:
-                        relayStatus = RELAY_OFF
-		array.append(relayStatus)
-	return array
-
-def handleSetBulkCommand(cmd_opcode, byteArray):
-    if cmd_opcode == op.VALVES_SET_ALL:
-        return setValves(byteArray)
-    if cmd_opcode == op.VALVES_GET_ALL:
-        return [consts.Addr.FCM, consts.Opcode.RELAY_GET_ALL_STATES.value]
     return ERROR
 
-def handleQD(cmd_opcode):
-    cmd_relay = consts.Relays.QD
-    return [cmd_relay.value.addr, getRelayOpcode(1), cmd_relay.value.relay]
-
-def handleSetValve(cmd_opcode, byteArray):
+def handleSetValveCommand(cmd_opcode, byteArray):
     cmd_direction = byteArray[1] # 0x01: open, 0x00: close
 
     cmd_relay = getRelayFromOpcode(cmd_opcode)
 
-    if cmd_relay == consts.Relays.ERROR:
+    if not cmd_relay:
         return ERROR
 
     # close (false) & NC (true) -> false (OFF)
@@ -89,26 +45,35 @@ def handleSetValve(cmd_opcode, byteArray):
 
     return [cmd_relay.value.addr, relayCommand, cmd_relay.value.relay]
 
+def handleSetBulkCommand(cmd_opcode, byteArray):
+    if cmd_opcode == op.VALVES_SET_ALL:
+        return setValves(byteArray)
+    if cmd_opcode == op.VALVES_GET_ALL:
+        return [consts.Addr.FCM, consts.Opcode.RELAY_GET_ALL_STATES.value]
+    return ERROR
 
-# Returns an MCU command corresponding to a given CDH command sequence
-def handleCommand(byteArray):
-    cmd_opcode = byteArray[0]
-    return getMCUCommand(cmd_opcode, byteArray)
-
-def getMCUCommand(cmd_opcode, byteArray):
-    # TODO: check correct length
-    if cmd_opcode in op.OPCODE_TYPES:
-        cmd_optype = op.OPCODE_TYPES[cmd_opcode]
-    else:
+def setValves(byteArray):
+    array = [consts.Addr.FCM, consts.Opcode.RELAY_SET_ALL.value]
+    if not len(byteArray) == 9:
         return ERROR
 
-    if(cmd_optype == op.OpType.SETVALVE):
-        return handleSetValve(cmd_opcode, byteArray)
+    for i in range(1, len(byteArray)):
+        cmd_direction = byteArray[i]
+        cmd_relay = consts.FCMRelays[i - 1]
 
-    elif(cmd_optype == op.OpType.SETBULK):
-        return handleSetBulkCommand(cmd_opcode, byteArray)
+        shouldTurnRelayOn = (cmd_direction == consts.IS_NORMALLY_CLOSED[cmd_relay])
+        relayCommand = getRelayOpcode(shouldTurnRelayOn)
+        array.append(relayCommand)
 
-    elif(cmd_optype == op.OpType.QD):
-        return handleQD(byteArray);
+    return array
 
-    return ERROR
+def handleDelayCommand(cmd_opcode, byteArray):
+    cmd_relay = getRelayFromOpcode(cmd_opcode)
+
+    if not len(byteArray) == 4:
+        return ERROR
+
+    cmd_direction = byteArray[1] # 0x01: open, 0x00: close
+    shouldTurnRelayOn = (cmd_direction == consts.IS_NORMALLY_CLOSED[cmd_relay]) # 1 = on, 0 = off
+
+    return [commandObject.value.addr, consts.Opcode.RELAY_SET_DELAYED.value, cmd_relay.value.relay, shouldTurnRelayOn, byteArray[2], byteArray[3]]
