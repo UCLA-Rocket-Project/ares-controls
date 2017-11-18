@@ -111,9 +111,11 @@ while True:
         moistEnabled = value
         led = 0
     
-    turnOnLED = (led < (5 if usingServer else 2.5))
+    turnOnLED = ((led < 8) if not usingServer else (led < 3 or (led > 5 and led < 8)))
+    if not moistEnabled:
+        turnOnLED = (led < 1)
 
-    if turnOnLED and moistEnabled:
+    if turnOnLED:
         GPIO.output(LED_PIN, 1)
     else:
         GPIO.output(LED_PIN, 0)
