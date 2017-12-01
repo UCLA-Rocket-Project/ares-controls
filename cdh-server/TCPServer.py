@@ -61,12 +61,30 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
         addr = mcuCommand.pop(0)
         opcode = mcuCommand.pop(0)
 
-        mcuResponse = sh.sendDataToMCUs(addr, opcode, mcuCommand)
-        tcpResponse = b'-'.join(mcuResponse)
-        if(tcpResponse == b''):
-            print("  tcp #> Nothing from MCU's")
-            tcpResponse = b'no response from MCUs'
-        return True, tcpResponse # success, response
+        attemptCount = 5
+        mcuResponse = []
+        errorCode = b''
+        retry = True
+
+        while retry and attemptCount < 5:
+            mcuResponses = sh.sendDataToMCUs(addr, opcode, mcuCommand)
+            tcpResponse = b' '.join(mcuResponses)
+
+            retry = False
+            for response in mcuResponses:
+                if response[0] == b'\xc0': # pi address, success = 0
+                    retry = True
+                    print("  tcp #> Received error code: {}".format(response), file=sys.stderr)
+                    errorCode = b'Received error code: ' + response
+            if tcpResponse == b'':
+                print("  tcp #> Nothing from MCU's", file=sys.stderr)
+                errorCode = b'No response from MCUs'
+                retry = True
+
+            if not retry:
+                return True, b'Success: ' + tcpResponse # success, response
+
+        return False, errorCode # only get this far if attemptCount = 5
 
 
 def getServerThread(HOST, PORT):
