@@ -1,8 +1,10 @@
+from threading import Thread
+import sys
 import socketserver
+
 import serialHandler
 import opcodes
 import commandHandler as ch
-from threading import Thread
 
 sh = serialHandler.getHandler()
 
@@ -20,17 +22,17 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
             if ((self.data[0] & 0xc0) == 0xc0):
                 success, response = self.handleCDHCommand(self.data)
                 if not success:
-                    print("  tcph #> Error handling CDH command")
+                    print("  tcph #> Error handling CDH command", file=sys.stderr)
                 self.request.sendall(response)
             #if mcuCommand:
             else:
                 success, response = self.handleMCUCommand(self.data)
                 if not success:
-                    print("  tcph #> Error handling MCU command")
+                    print("  tcph #> Error handling MCU command", file=sys.stderr)
                 self.request.sendall(response)
 
         # outside of while loop
-        print("  tcp #> Client disconnected: {}".format(self.client_address[0]))
+        print("  tcp #> Client disconnected: {}".format(self.client_address[0]), file=sys.stderr)
 
     def handleCDHCommand(self, data):
         opcode = data[0]
@@ -43,11 +45,14 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
                 port = data[1:data.index(b'\x00')].decode('ascii')
                 print('   cdh-command #> attempting serial connection to {}'.format(port))
                 result = serialHandler.getHandler().connect(port)
-                print('   cdh-command #> connection attempt success? -> {}'.format(result))
+                if result:
+                    print('   cdh-command #> connection attempt success!')
+                else:
+                    print('   cdh-command #> connection attempt unsuccessful', file=sys.stderr)
                 return True, str.encode('Opening serial connection to port {} success? {}' \
                     .format(port, result))
             except Exception as e:
-                print('   cdh-command #> handling exception: {}'.format(e))
+                print('   cdh-command #> handling exception: {}'.format(e), file=sys.stderr)
                 return False, str.encode('Unknown error processing data: ' + e)
         else:
             return False, b'Invalid CDH Opcode'

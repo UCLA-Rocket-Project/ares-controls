@@ -1,6 +1,7 @@
+import sys
+
 import serialHandler
 import TCPServer
-
 
 def main():
 
@@ -24,7 +25,7 @@ def main():
         if result:
             print('main *> Successfully connected to device at port {}'.format(port))
         else:
-            print('main *> Error connecting to device at port {}'.format(port))
+            print('main *> Error connecting to device at port {}'.format(port), file=sys.stderr)
 
     print('main *> Creating TCP Server Thread')
     serverThread = TCPServer.getServerThread("0.0.0.0", 9999)
