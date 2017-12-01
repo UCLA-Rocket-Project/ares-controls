@@ -1,7 +1,7 @@
 import RPi.GPIO as GPIO
 import time
 from multiprocessing import Process, SimpleQueue
-import serverClient as serv
+import cdhClient as serv
 import socket
 from collections import namedtuple
 
@@ -63,7 +63,7 @@ def my_callback(channel):
         return
 
     time.sleep(0.01)
-    switch_in = getSwitch(channel) 
+    switch_in = getSwitch(channel)
     switch = MAP[channel]
 
     print("channel:", channel, "input:", switch_in)
@@ -114,7 +114,7 @@ while True:
         print("Enabling MOIST" if value else "Disabling MOIST")
         moistEnabled = value
         led = 0
-    
+
     turnOnLED = ((led < 10) if not usingServer else (led < 3 or (led > 5 and led < 8)))
     if not moistEnabled:
         turnOnLED = (led < 1)
