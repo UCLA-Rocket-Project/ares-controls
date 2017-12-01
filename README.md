@@ -3,9 +3,9 @@ ares-controls :rocket:
 Control systems software for the Ares rocket
 
 ## Components
-- [CDH Server](cdh/README.md)
-- [MCU (FCM/GCM)](mcu/README.md)
-- [MOIST switchbox](moist/README.md)
+- [CDH Server](cdh/)
+- [MCU (FCM/GCM)](mcu/)
+- [MOIST switchbox](moist/)
 
 
 ## Getting Started
