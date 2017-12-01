@@ -48,17 +48,17 @@ _**C**ommand and **D**ata **H**andling server_
 ##### Usage
 
 ```bash
-$> make cdhserv # Build source into executable (bin/moist)
-$> make cdhserv-deploy # Copy executable into /deploy/ (requires sudo)
-$> make cdhserv-service-setup # Sets up a systemd service for moist to auto-run on a pi (requires sudo)
+$> make cdh # Build source into executable (bin/moist)
+$> make cdh-deploy # Copy executable into /deploy/ (requires sudo)
+$> make cdh-service-setup # Sets up a systemd service for moist to auto-run on a pi (requires sudo)
 
-$> systemctl status cdhserv.service # Check if service running
-$> sudo systemctl stop cdhserv.service # Stop running service
-$> sudo systemctl start cdhserv.service # Start service
-$> sudo systemctl enable cdhserv.service # Start service every time we boot up
-$> sudo systemctl disable cdhserv.service # Disable auto-run of service on startup
+$> systemctl status cdhserv # Check if service running
+$> sudo systemctl stop cdhserv # Stop running service
+$> sudo systemctl start cdhserv # Start service
+$> sudo systemctl enable cdhserv # Start service every time we boot up
+$> sudo systemctl disable cdhserv # Disable auto-run of service on startup
 ```
-> Currently, the systemd service implementation does not support printing to the console or a log file. To run the program with console output, run either `/deploy/cdhserv` or `ares-controls/bin/cdhserv` or `ares-controls/cdh-server/__main__.py`
+> Currently, the systemd service implementation does not support printing to the console or a log file. To run the program with console output, run either `/deploy/cdhserv` or `ares-controls/bin/cdhserv` or `ares-controls/cdh/__main__.py`
 
 ##### Features
 - TCP Server for receiving commands
