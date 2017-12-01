@@ -12,24 +12,22 @@ def sendData(opcode, data):
     toSend.append(opcode)
     toSend.extend(data)
     dataQueue.put(toSend)
-    print("Put data: 0x{}".format(bytearray(toSend).hex()))
-    print("")
+    print("event-raw> Send data: 0x{}".format(bytearray(toSend).hex()))
 
+Switch = namedtuple('Switch', 'opcode is_no string')
 
-Switch = namedtuple('Switch', 'opcode is_no')
+PRESS_PROP = Switch(0x32, 0, 'PRESS PROP')
+OX_FILL = Switch(0x33, 0, 'OX FILL')
+OX_DUMP = Switch(0x3e, 0, 'OX DUMP')
+PRESS_VENT = Switch(0x34, 0, 'PRESS VENT')
+OX_VENT = Switch(0x36, 0, 'OX VENT')
+FUEL_VENT = Switch(0x38, 0, 'FUEL VENT')
+FUEL_CC = Switch(0x3a, 0, 'FUEL CC')
+OX_CC = Switch(0x3c, 0, 'OX CC')
 
-PRESS_PROP = Switch(0x32, 0)
-OX_FILL = Switch(0x33, 0)
-OX_DUMP = Switch(0x3e, 0)
-PRESS_VENT = Switch(0x34, 0)
-OX_VENT = Switch(0x36, 0)
-FUEL_VENT = Switch(0x38, 0)
-FUEL_CC = Switch(0x3a, 0)
-OX_CC = Switch(0x3c, 0)
-
-PRESS_FILL = Switch(0x40, 0)
-QUICK_DISC = Switch(0x43, 0)
-IGNITE = Switch(0x41, 0)
+PRESS_FILL = Switch(0x40, 0, 'PRESS FILL')
+QUICK_DISC = Switch(0x43, 0, 'QUICK DISCONNECT')
+IGNITE = Switch(0x41, 0, 'IGNITION!!!')
 
 IGNITE_INDEX = 9
 
@@ -69,14 +67,15 @@ def getSwitch(channel):
 
 def my_callback(channel):
     if not moistEnabled:
-        print("not enabled :(")
+        print("event> not enabled :(")
         return
 
     time.sleep(0.01)
     switch_in = getSwitch(channel) 
     switch = MAP[channel]
 
-    print("channel:", channel, "input:", switch_in)
+    print("\nevent> channel:", channel, "input:", switch_in)
+    print("event-english> ", switch.string, " is being ", ("OPENED" if switch_in else "CLOSED"))
 
     output = (1 if (switch.is_no != switch_in) else 0)
     GPIO.output(LEDMAP[switch], output)
@@ -86,7 +85,6 @@ def my_callback(channel):
 GPIO.setmode(GPIO.BCM)
 
 for pin in MAP:
-    print('setup pin {}'.format(pin))
     GPIO.setup(pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
     GPIO.add_event_detect(pin, GPIO.BOTH, callback=my_callback, bouncetime=25)
 
@@ -109,9 +107,9 @@ moistEnabled = False
 try:
     serv.connect('arescdhbeta', 9999)
     clientProcess.start()
-    print("connected to server!")
+    print("TCP> connected to server!")
 except socket.error as e:
-    print("Error starting connection to server, code ", e)
+    print("TCP> Error starting connection to server, code ", e)
     usingServer = False
 
 led = 0
@@ -119,7 +117,7 @@ led = 0
 while True:
     value = getSwitch(ENABLE_PIN)
     if moistEnabled != value:
-        print("Enabling MOIST" if value else "Disabling MOIST")
+        print("\nENABLE> ", "Enabling MOIST" if value else "Disabling MOIST")
         moistEnabled = value
         led = 0
     
