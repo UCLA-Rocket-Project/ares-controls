@@ -2,91 +2,103 @@ ares-controls :rocket:
 =============
 Control systems software for the Ares rocket
 
-MOIST:
-------
-_**M**ission **O**perator **I**nterface: **S**witch **T**erminal_
+## Getting Started
 
-##### Usage
+#### 1. Clone the repository
+```bash
+$> # clone repository (HTTP):
+$> git clone https://github.com/UCLA-Rocket-Project/ares-controls
+$> # OR use SSH:
+$> git clone git@github.com:UCLA-Rocket-Project/ares-controls
+```
+
+#### 2. Install Dependencies, as needed
+
+MCU:
+> For building the MCU software, you will need to import the project into the Arduino IDE
+
+CDH and MOIST:
+```bash
+$> # 1. Python3
+$> apt-get install python3 #  this may not work - see online for better instructions
+$> # 1.5. pip3
+$> apt-get install python3-pip
+$> # 2. pyserial
+$> pip3 install pyserial
+$> # 3. zip (for deployment via makefile)
+$> apt-get install zip
+```
+> Make sure you use sudo if needed! (if anything ever complains about permissions, try sudo)
+
+> Both cdh and moist will run on any device with python3, with certain functionality only available on the Raspberry Pi (more details on configuring Raspberry Pi to be included later)
+
+#### 3. Edit projects, as needed
+
+Read the project-specific documentation (README.md within each subfolder) for more information on each project
+
+> Edit projects using your favorite editor - we suggest the Arduino IDE for the MCU project, and something like atom for the others (or vim/nano/emacs if running via ssh on the Raspberry Pi)
+
+#### 4. Testing and Deployment
+
+###### MCU:
+For Arduino projects, test using the Arduino IDE
+
+###### MOIST/CDH:
+Run the project by calling one of the following (replace `cdh` or `cdhserv` with `moist`)
+```bash
+$> # To test without building via make:
+$> python3 cdh/ # OR USE
+$> python3 cdh/__main__.py
+$> # To make an executable but test locally:
+$> make cdh
+$> ./bin/cdhserv # run the file (note: typing out python3 is optional)
+$> # To make and deploy for production:
+$> make cdh-deploy
+$> /deploy/cdhserv
+```
+
+> For info on using MOIST and CDH programs as services with systemd, see their respective README files
+
+#### 5. Contributing Code
+
+When you have finished writing and testing your code:
 
 ```bash
-$> make moist-client # Build source into executable (bin/moist)
-$> make moist-deploy # Copy executable into /deploy/ (requires sudo)
-$> make moist-service-setup # Sets up a systemd service for moist to auto-run on a pi (requires sudo)
+$> # run git status to get the current status of our working copy
+$> git status
 
-$> systemctl status moist.service # Check if service running
-$> sudo systemctl stop moist.service # Stop running service
-$> sudo systemctl start moist.service # Start service
-$> sudo systemctl enable moist.service # Start service every time we boot up
-$> sudo systemctl disable moist.service # Disable auto-run of service on startup
+$> # make sure we have the latest of what's on the server
+$> git fetch
+
+$> # make sure we're on a branch (not master!), related to whatever changes we made
+$> git checkout -b [branchName] # if the branch needs to be created
+$> git checkout [branchName] # if the branch already exists
+
+$> # stage the files that we'd like to commit
+$> git add . # stage all files
+$> git add file1 file2 file3 # stage specific files
+$> git add -p # patch add: lets you stage individual changes (useful!)
+
+$> # if you accidentally stage something you don't want to commit:
+$> git reset filename # this doesn't delete your changes, it just unstages them
+$> git reset --hard filename # WARNING: this reverts all changes
+
+$> # commit our changes
+$> git commit -m "commit message here" # if git is configured with your name/email
+$> git commit -m "commit message here" --author="Some Name <someone@ucla.edu>"
+
+$> # push our changes to the repository!
+$> git push -u origin [branchName] # if the branch was newly created
+$> git push # if the branch already exists on the repository
+$> # Note: merging might be required if changes were made upstream
 ```
-> Currently, the systemd service implementation does not support printing to the console or a log file. To run the program with console output, run either `/deploy/moist` or `ares-controls/bin/moist` or `ares-controls/moist/__main__.py`
+> Make sure you **commit very frequently**, and break up commits so that each commit only includes changes within its scope. Don't be afraid to commit dozens of times in a day!
 
-##### Features
-- Switch board, with switches for each valve
-- Ignition and ignition safety digital inputs
-- MOIST Enable digital input/switch
-- LED indicator for network status and arming
-- Ethernet port, internal power (power bank)
+> ```git add -p``` can be your best friend when you have lots of changes that you're trying to split into several commits
 
-##### Software Features
-- Callback function to handle GPIO (switch) events
-- TCP Client connecting to CDH controls server
-    - Socket client running asynchronously, on a separate thread
-- Systemd service to run script on startup
+> Obviously, this is just a brief primer on git. For more details, check out [this really neat tutorial.](https://www.atlassian.com/git/tutorials)
 
-##### Planned
-- [ ] Clean logging and debug output
-- [ ] Exception handling software (restart MOIST on error)
-- [ ] Built-in battery charging port
-- [ ] Field debugging/visualization output
-- [ ] Heartbeat between CDH and MOIST
-
-CDH-server:
-------------------
-_**C**ommand and **D**ata **H**andling server_
-
-##### Usage
-
-```bash
-$> make cdh # Build source into executable (bin/moist)
-$> make cdh-deploy # Copy executable into /deploy/ (requires sudo)
-$> make cdh-service-setup # Sets up a systemd service for moist to auto-run on a pi (requires sudo)
-
-$> systemctl status cdhserv # Check if service running
-$> sudo systemctl stop cdhserv # Stop running service
-$> sudo systemctl start cdhserv # Start service
-$> sudo systemctl enable cdhserv # Start service every time we boot up
-$> sudo systemctl disable cdhserv # Disable auto-run of service on startup
-```
-> Currently, the systemd service implementation does not support printing to the console or a log file. To run the program with console output, run either `/deploy/cdhserv` or `ares-controls/bin/cdhserv` or `ares-controls/cdh/__main__.py`
-
-##### Features
-- TCP Server for receiving commands
-    - Handles MCU and Maintenance commands (connect to serial device, list serial devices, etc)
-- Serial Master functionality to translate and send commands to FCM/GCM
-    - Supports multiple device connections with addressing, on 1+ serial buses
-    - Connects to devices by physical port location, not dynamically assigned IDs
-
-##### Planned
-- [ ] Handle multiple concurrent connections on separate threads, test current functionality
-- [ ] Exception handling software and hardware watchdog (restart CDH on error)
-- [ ] Error code and TCP response standardization
-- [ ] Field debugging/visualization output
-- [ ] Basic maintenance commands for serial connections/listing
-- [ ] Expansion of Maintenance commands (restart server, etc)
-- [ ] Heartbeat between CDH and MOIST
-
-FCM-mcu:
------------------
-_**F**light **C**ontrol **M**odule - microcontroller unit_
-
-##### Features
-- Receives commands over serial/TTY to turn on/off relays
-    - Error checking CRC-8 to handle bad commands or corrupted payloads
-
-##### Planned
-- [ ] Standalone Arduino/ATMega circuitboard with FTDI usb-uart chip
-- [ ] Safe modes for resetting to default states after a timeout
-- [ ] Delayed commands/task scheduler
-- [ ] Store relay pin mapping and address to EEPROM
-    - [ ] Commands to update mapping and address over serial
+##### Merging into Production
+When you are ready to integrate your code into the master branch:
+[Create a Pull Request!](https://github.com/UCLA-Rocket-Project/ares-controls/compare)
+> use `master` as the base, and compare your own branch
