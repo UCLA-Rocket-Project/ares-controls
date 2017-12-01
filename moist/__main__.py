@@ -21,9 +21,9 @@ Switch = namedtuple('Switch', 'opcode is_no')
 PRESS_PROP = Switch(0x32, 0)
 OX_FILL = Switch(0x33, 0)
 OX_DUMP = Switch(0x3e, 0)
-PRESS_VENT = Switch(0x34, 1)
-OX_VENT = Switch(0x36, 1)
-FUEL_VENT = Switch(0x38, 1)
+PRESS_VENT = Switch(0x34, 0)
+OX_VENT = Switch(0x36, 0)
+FUEL_VENT = Switch(0x38, 0)
 FUEL_CC = Switch(0x3a, 0)
 OX_CC = Switch(0x3c, 0)
 
@@ -82,12 +82,16 @@ for pin in relay_pins:
     GPIO.setup(pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
     GPIO.add_event_detect(pin, GPIO.BOTH, callback=my_callback, bouncetime=25)
 
+for channel in [27, 11, 10]:
+    switch = MAP[channel]
+    switch_in = getSwitch(channel)
+    sendData(switch.opcode, [1 if (switch.is_no != switch_in) else 0])
+
 ENABLE_PIN = 19
 GPIO.setup(ENABLE_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
 
 LED_PIN = 26
 GPIO.setup(LED_PIN, GPIO.OUT)
-
 
 
 #main begins here
@@ -111,7 +115,7 @@ while True:
         moistEnabled = value
         led = 0
     
-    turnOnLED = ((led < 8) if not usingServer else (led < 3 or (led > 5 and led < 8)))
+    turnOnLED = ((led < 10) if not usingServer else (led < 3 or (led > 5 and led < 8)))
     if not moistEnabled:
         turnOnLED = (led < 1)
 
