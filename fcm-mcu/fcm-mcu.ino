@@ -19,7 +19,8 @@
 #define ADDRESS 0x40  /* will be written to permanent memory and removed */
 #define piAddress 0xc0
 #define BBSIZE 2
-#define MAXDATA 11
+#define MAXDATA 12
+#define maxQueued 10
 
 #define opCodeMask 0x3f
 #define addressMask 0xc0
@@ -29,22 +30,22 @@
 #define dataLengthError 0xfe
 #define crcError 0xff
 
-#define numOpCodes 18 //16 + continue and stop codes
+#define numOpCodes 19 //16 + continue and stop codes
 
 /* will be written to permanent memory and removed */
-#define Relay0 12
-#define Relay1 11
-#define Relay2 10
-#define Relay3 9
-#define Relay4 7
-#define Relay5 6
-#define Relay6 5
-#define Relay7 4
+#define Relay0 2
+#define Relay1 3
+#define Relay2 4
+#define Relay3 5
+#define Relay4 6
+#define Relay5 7
+#define Relay6 8
+#define Relay7 9
 
 int relays[] = {Relay0, Relay1, Relay2, Relay3, Relay4, Relay5, Relay6, Relay7};  /* will be written to permanent memory and removed */
 
-constexpr byte opCodeList[] = {0x10,0x11,0x012,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x3e,0x3f}; /*all the op codes including continue and stop as the last two*/
-constexpr int opCodeLengths[] = {2,2,2,2,2,2,9,4,4,4,4,11,9,2,2,2,-1,-1}; /*corresponding expected data lengths for each op code (ORDER MATTERS)*/
+constexpr byte opCodeList[] = {0x10,0x11,0x012,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x3e,0x3f}; /*all the op codes including continue and stop as the last two*/
+constexpr int opCodeLengths[] = {2,2,2,2,2,2,9,5,5,5,5,12,9,2,2,2,2,-1,-1}; /*corresponding expected data lengths for each op code (ORDER MATTERS)*/
 
 /* Initialization for Data Collection Vars */
 byte byte_buffer[BBSIZE];
@@ -53,9 +54,9 @@ int currentDataIdx;
 int expectedDataLength;
 
 /* For delayed commands */
-byte commandCodeQueue[10];
-byte commandDataQueue[10];
-unsigned int commandTimeToExecute[10];
+byte commandCodeQueue[maxQueued];
+byte commandDataQueue[maxQueued];
+long commandTimeToExecute[maxQueued];
 
 /* declaring methods */
 void setRelay(int, int);
@@ -74,7 +75,7 @@ void setup() {
   //  EEPROM.write(i+2, relays[i]);
   }*/
   
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < maxQueued; i++) {
     commandCodeQueue[i] = 0x00;
     commandDataQueue[i] = 0x00;
     commandTimeToExecute[i] = -1;
@@ -240,7 +241,7 @@ void processCommand (byte currentCommand[]) {
   byte opCode = currentCommand[0] & opCodeMask;
   bool openSpotInQueue;
   int currentSpot;
-  unsigned int timeDelay;
+  long timeDelay;
   byte relayNums[8];
   
   switch (opCode) {
@@ -282,10 +283,10 @@ void processCommand (byte currentCommand[]) {
     sendOverSerial2(0x01, 0x00);
     break;
     case opCodeList[7]:
-    timeDelay = bytesToInt(currentCommand[2], currentCommand[3]);
+    timeDelay = bytesToLong(currentCommand[2], currentCommand[3], currentCommand[4]);
     openSpotInQueue = false;
     currentSpot = 0;
-    while (!openSpotInQueue && currentSpot < 10) {
+    while (!openSpotInQueue && currentSpot < maxQueued) {
       if (commandTimeToExecute[currentSpot] == -1) {
         openSpotInQueue = true;
         commandTimeToExecute[currentSpot] = millis() + timeDelay;
@@ -302,10 +303,10 @@ void processCommand (byte currentCommand[]) {
     }
     break;
     case opCodeList[8]:
-    timeDelay = bytesToInt(currentCommand[2], currentCommand[3]);
+    timeDelay = bytesToLong(currentCommand[2], currentCommand[3], currentCommand[4]);
     openSpotInQueue = false;
     currentSpot = 0;
-    while (!openSpotInQueue && currentSpot < 10) {
+    while (!openSpotInQueue && currentSpot < maxQueued) {
       if (commandTimeToExecute[currentSpot] == -1) {
         openSpotInQueue = true;
         commandTimeToExecute[currentSpot] = millis() + timeDelay;
@@ -322,10 +323,10 @@ void processCommand (byte currentCommand[]) {
     }
     break;
     case opCodeList[9]:
-    timeDelay = bytesToInt(currentCommand[2], currentCommand[3]);
+    timeDelay = bytesToLong(currentCommand[2], currentCommand[3], currentCommand[4]);
     openSpotInQueue = false;
     currentSpot = 0;
-    while (!openSpotInQueue && currentSpot < 10) {
+    while (!openSpotInQueue && currentSpot < maxQueued) {
       if (commandTimeToExecute[currentSpot] == -1) {
         openSpotInQueue = true;
         commandTimeToExecute[currentSpot] = millis() + timeDelay;
@@ -342,10 +343,10 @@ void processCommand (byte currentCommand[]) {
     }
     break;
     case opCodeList[10]:
-    timeDelay = bytesToInt(currentCommand[2], currentCommand[3]);
+    timeDelay = bytesToLong(currentCommand[2], currentCommand[3], currentCommand[4]);
     openSpotInQueue = false;
     currentSpot = 0;
-    while (!openSpotInQueue && currentSpot < 10) {
+    while (!openSpotInQueue && currentSpot < maxQueued) {
       if (commandTimeToExecute[currentSpot] == -1) {
         openSpotInQueue = true;
         commandTimeToExecute[currentSpot] = millis() + timeDelay;
@@ -362,15 +363,15 @@ void processCommand (byte currentCommand[]) {
     }
     break;
     case opCodeList[11]:
-    timeDelay = bytesToInt(currentCommand[9], currentCommand[10]);
+    timeDelay = bytesToLong(currentCommand[9], currentCommand[10], currentCommand[11]);
     openSpotInQueue = false;
     currentSpot = 0;
     byte relayStatesToSet;
     for (int i = 1; i < 9; i++) {
-     relayStatesToSet <<= 1;
+     relayStatesToSet = relayStatesToSet << 1;
      relayStatesToSet |= currentCommand[i];
     }
-    while (!openSpotInQueue && currentSpot < 10) {
+    while (!openSpotInQueue && currentSpot < maxQueued) {
       if (commandTimeToExecute[currentSpot] == -1) {
         openSpotInQueue = true;
         commandTimeToExecute[currentSpot] = millis() + timeDelay;
@@ -383,7 +384,7 @@ void processCommand (byte currentCommand[]) {
       sendOverSerial2(0x00, delayQueueFullError);
     }
     else {
-      sendOverSerial2(0x01, 0x00);
+      sendOverSerial2(0x01, relayStatesToSet);
     }
     break;
     case opCodeList[12]:
@@ -402,6 +403,13 @@ void processCommand (byte currentCommand[]) {
     break;
     case opCodeList[15]:
     EEPROM.write(1, currentCommand[1]);
+    break;
+    case opCodeList[16]:
+    for (int i = 0; i < maxQueued; i++) {
+      commandCodeQueue[i] = 0x00;
+      commandDataQueue[i] = 0x00;
+      commandTimeToExecute[i] = -1;
+    }
     break;
   }
 }
@@ -431,17 +439,24 @@ void sendOverSerial2 (byte success, byte data) {
   Serial.write(CRC8(addressSuccessData, 2));
 }
 
-int bytesToInt(unsigned int x_high, unsigned int x_low)
+long bytesToLong(long x_high, long x_low)
 {
-  unsigned int combined;
-  combined = x_high;
-  combined = combined*256; 
+  long combined = 0;
+  combined += x_high * 256;
+  combined += x_low;
+  return combined;
+}
+long bytesToLong(long x_high, long x_mid, long x_low)
+{
+  long combined = 0;
+  combined += x_high * 256 * 256;
+  combined += x_mid * 256;
   combined += x_low;
   return combined;
 }
 
 void checkTime() {
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < maxQueued; i++) {
     if (commandTimeToExecute[i] <= millis() && commandTimeToExecute[i] != -1) {
       byte tempCommand[] = {commandCodeQueue[i], commandDataQueue[i]};
       processDelayedCommand(tempCommand);
@@ -471,9 +486,11 @@ void processDelayedCommand (byte delComm[]) {
     }
     break;
     case opCodeList[11]:
-    for (int i = 0; i < 8; i++) {
-      setRelay(i, delComm[1] & 0x80);
-      delComm[1] << 1;
+    byte relStates = delComm[1];
+    for (int i = 7; i > -1; i--) {
+      byte onOff = relStates & 0x01;
+      setRelay(i, onOff);
+      relStates >>= 1;
     }
     break;
   }
