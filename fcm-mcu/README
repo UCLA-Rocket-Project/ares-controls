@@ -1,0 +1,21 @@
+FCM-MCU Serial Communication:
+  - Data is sent in multi-byte transmissions, two bytes as a time.
+    - It is sent with both address and op code in the first byte, the address being the first two bits and the op code being the remaining 6.
+      - This allows for 4 potential addresses (3 needed) and 64 potential op codes.
+    - The second byte sent will always be interpreted as a data byte.
+  - There are two special op codes, continue and stop, that are interpreted differently than the rest.
+    - After a starting/new op code is received, a command will start to be assembled with the address/op code byte as the beginning.
+    - the second byte in the pair will be added to the command as data.
+  - The next byte pair sent must have either the continue or stop op code to be valid.
+    - If the continue code is received, the second byte in the pair will be added to the command as more data.
+    - This will repeat until a non continue code is received (i.e. stop or a new starting op code).
+    - Once the stop code is received, the next byte must be the correct CRC 8 calculated from the initial address/op code and all the data sent.
+      - The command at this point is fully assembled, being composed of the initial address/op code and all the data sent.
+        - (It does not include continue codes, the stop code, or the CRC 8.)
+      - The command is checked to ensure that it contains the correct amount of data.
+      - a CRC 8 is computed from the command as well to be checked with the received CRC 8.
+  - If all was sent and received without error, the command will then be processed, which will do as requested by the MCU.
+    - If any errors occured, the command is not processed and an error message is sent back in similar fashion to the method described above.
+  
+  Check the following link for op code documentation:
+  https://docs.google.com/spreadsheets/d/1r0zNM0y-FEgeVTTzpJzNjrXxf3hs2GVzCn1geaSeYOE/edit#gid=1305699077
