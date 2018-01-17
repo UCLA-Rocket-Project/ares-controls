@@ -4,7 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/deploy/moist
+ExecStart=/usr/bin/python3 -u /deploy/moist
 
 [Install]
 WantedBy=multi-user.target
