@@ -11,17 +11,17 @@ class Addr:
 Relay = namedtuple('Relay', 'addr relay')
 
 class Relays(Enum):
-    PRESS_PROP = Relay(Addr.FCM, 0)
-    OX_FILL = Relay(Addr.FCM, 1)
-    PRESS_VENT = Relay(Addr.FCM, 2)
-    OX_VENT = Relay(Addr.FCM, 3)
-    FUEL_VENT = Relay(Addr.FCM, 4)
-    FUEL_CC = Relay(Addr.FCM, 5)
-    OX_CC = Relay(Addr.FCM, 6)
-    OX_DUMP = Relay(Addr.FCM, 7)
-    PRESS_FILL = Relay(Addr.GCM, 0)
-    IGNITION = Relay(Addr.GCM, 1)
-    QD = Relay(Addr.GCM, 2)
+    PRESS_VENT = Relay(Addr.FCM, 0)
+    OX_VENT = Relay(Addr.FCM, 1)
+    FUEL_VENT = Relay(Addr.FCM, 2)
+    FUEL_CC = Relay(Addr.FCM, 3)
+    OX_CC = Relay(Addr.FCM, 4)
+    OX_DUMP = Relay(Addr.FCM, 5)
+    
+    KBTL_FILL = Relay(Addr.GCM, 0)
+    TBTL_FILL = Relay(Addr.GCM, 1)
+    IGNITION = Relay(Addr.GCM, 2)
+    QD = Relay(Addr.GCM, 3)
 
 class Opcode(Enum):
     RELAY_OFF = 0x10
@@ -33,8 +33,6 @@ class Opcode(Enum):
     RELAY_SET_ALL = 0x16
 
 FCMRelays = [
-    Relays.PRESS_PROP,
-    Relays.OX_FILL,
     Relays.PRESS_VENT,
     Relays.OX_VENT,
     Relays.FUEL_VENT,
@@ -44,35 +42,33 @@ FCMRelays = [
 ]
 
 OPCODE_MATCHER = {
-	op.PRESS_PROP_SET: Relays.PRESS_PROP,
-	op.OX_FILL_SET: Relays.OX_FILL,
 	op.PRESS_VENT_SET: Relays.PRESS_VENT,
 	op.PRESS_VENT_DELAYED_SET: Relays.PRESS_VENT,
 	op.OX_VENT_SET: Relays.OX_VENT,
 	op.OX_VENT_DELAYED_SET: Relays.OX_VENT,
+        op.OX_DUMP_SET: Relays.OX_DUMP,
 	op.FUEL_VENT_SET: Relays.FUEL_VENT,
 	op.FUEL_VENT_DELAYED_SET: Relays.FUEL_VENT,
 	op.FUEL_CC_SET: Relays.FUEL_CC,
 	op.FUEL_CC_DELAYED_SET: Relays.FUEL_CC,
 	op.OX_CC_SET: Relays.OX_CC,
 	op.OX_CC_DELAYED_SET: Relays.OX_CC,
-	op.PRESS_FILL_SET: Relays.PRESS_FILL,
+	op.TBTL_FILL_SET: Relays.TBTL_FILL,
+        op.KBTL_FILL_SET: Relays.KBTL_FILL,
 	op.IGNITION_SET: Relays.IGNITION,
-        op.OX_DUMP_SET: Relays.OX_DUMP,
         op.QD_SET: Relays.QD
 	# op.IGNITE_FOR_TIME: Relays.IGNITION
 }
 
 IS_NORMALLY_CLOSED = {
-	Relays.PRESS_PROP: True,
-    Relays.OX_FILL: True,
     Relays.PRESS_VENT: False,
     Relays.FUEL_VENT: False,
     Relays.OX_VENT: False,
     Relays.FUEL_CC: True,
     Relays.OX_CC: True,
-    Relays.PRESS_FILL: True,
+    Relays.OX_DUMP: True,
+    Relays.TBTL_FILL: True,
+    Relays.KBTL_FILL: True,
     Relays.IGNITION: True,
-    Relays.QD: True,
-    Relays.OX_DUMP: True
+    Relays.QD: True
 }
