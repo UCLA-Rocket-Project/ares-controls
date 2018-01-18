@@ -1,5 +1,5 @@
 from collections import namedtuple
-from libares.opcodes import *
+from libares.constants import *
 
 Switch = namedtuple('Switch', 'opcode is_no')
 
