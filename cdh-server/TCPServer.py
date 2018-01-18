@@ -62,11 +62,12 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
         print("  tcp #> MCU Command: {}".format(mcuCommand))
 
         if(mcuCommand == ch.ERROR):
+            print("  tcph $> Bad Request")
             return False, b'Error bad request!' # success, response
         addr = mcuCommand.pop(0)
         opcode = mcuCommand.pop(0)
 
-        attemptCount = 5
+        attemptCount = 0
         mcuResponse = []
         errorCode = b''
         retry = True
@@ -76,6 +77,7 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
             tcpResponse = b' '.join(mcuResponses)
 
             retry = False
+            attemptCount += 1
             for response in mcuResponses:
                 if response[0] == b'\xc0': # pi address, success = 0
                     retry = True
@@ -89,6 +91,7 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
             if not retry:
                 return True, b'Success: ' + tcpResponse # success, response
 
+        print("  tcph #> Failed 5 attempts")
         return False, errorCode # only get this far if attemptCount = 5
 
 
