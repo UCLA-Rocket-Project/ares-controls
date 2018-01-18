@@ -3,8 +3,8 @@ import serial as pyserial
 import time
 
 serial_prefix = "/dev/serial/by-path/platform-3f980000.usb-usb-0:"
-RIGHT_PORTS = [serial_prefix + "1.4:1.0", serial_prefix + "1.5:1.0"]
-LEFT_PORTS = [serial_prefix + "1.2:1.0", serial_prefix + "1.3:1.0"]
+RIGHT_PORTS = [serial_prefix + "1.4:1.0-port0", serial_prefix + "1.5:1.0-port0"]
+LEFT_PORTS = [serial_prefix + "1.2:1.0-port0", serial_prefix + "1.3:1.0-port0"]
 
 class SerialHandler:
     def __init__(self, delay=0.5):

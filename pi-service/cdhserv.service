@@ -4,7 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=idle
-ExecStart=/deploy/cdhserv
+ExecStart=/usr/bin/python3 -u /deploy/cdhserv
 
 [Install]
 WantedBy=multi-user.target
