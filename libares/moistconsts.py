@@ -16,23 +16,23 @@ FUEL_CC = Switch(OP_FCM_FUEL_CC_SET, 0)
 OX_CC = Switch(OP_FCM_OX_CC_SET, 0)
 
 LEDMAP = {
-    PRESS_PROP: 21,
-    OX_FILL: 20,
+    KBTL_FILL: 21,
     OX_DUMP: 12,
     PRESS_VENT: 25,
     OX_VENT: 8,
     FUEL_VENT: 7,
     FUEL_CC: 23,
     OX_CC: 18,
-    PRESS_FILL: 16,
+    TBTL_FILL: 16,
     QUICK_DISC: 26,
     IGNITE: 24
 }
 
+IGNITE_INDEX = 9
+
 MAP = {
-    11: TBTL_FILL,
-    6: OX_FILL,
-    5: KBTL_FILL,
+    11: KBTL_FILL,
+    5: TBTL_FILL,
     22: QUICK_DISC,
     2: PRESS_VENT,
     3: OX_VENT,
@@ -40,7 +40,7 @@ MAP = {
     13: OX_DUMP,
     4: FUEL_CC,
     17: OX_CC,
-    9: IGNITE
+    IGNITE_INDEX: IGNITE
 }
 
 ENABLE_PIN = 19
