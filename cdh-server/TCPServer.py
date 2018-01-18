@@ -3,7 +3,7 @@ import sys
 import socketserver
 
 import serialHandler
-import opcodes
+from libares import opcodes
 import commandHandler as ch
 
 sh = serialHandler.getHandler()
