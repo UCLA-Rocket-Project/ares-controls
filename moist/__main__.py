@@ -12,98 +12,104 @@ def sendData(opcode, data):
     toSend.append(opcode)
     toSend.extend(data)
     dataQueue.put(toSend)
-    print("Put data: 0x{}".format(bytearray(toSend).hex()))
-    print("")
+    print("event-raw> Send data: 0x{}".format(bytearray(toSend).hex()))
 
+Switch = namedtuple('Switch', 'opcode is_no string')
 
-Switch = namedtuple('Switch', 'opcode is_no')
+PRESS_PROP = Switch(0x32, 0, 'PRESS PROP')
+OX_FILL = Switch(0x33, 0, 'OX FILL')
+OX_DUMP = Switch(0x3e, 0, 'OX DUMP')
+PRESS_VENT = Switch(0x34, 0, 'PRESS VENT')
+OX_VENT = Switch(0x36, 0, 'OX VENT')
+FUEL_VENT = Switch(0x38, 0, 'FUEL VENT')
+FUEL_CC = Switch(0x3a, 0, 'FUEL CC')
+OX_CC = Switch(0x3c, 0, 'OX CC')
 
-PRESS_PROP = Switch(0x32, 0)
-OX_FILL = Switch(0x33, 0)
-OX_DUMP = Switch(0x3e, 0)
-PRESS_VENT = Switch(0x34, 0)
-OX_VENT = Switch(0x36, 0)
-FUEL_VENT = Switch(0x38, 0)
-FUEL_CC = Switch(0x3a, 0)
-OX_CC = Switch(0x3c, 0)
+PRESS_FILL = Switch(0x40, 0, 'PRESS FILL')
+QUICK_DISC = Switch(0x43, 0, 'QUICK DISCONNECT')
+IGNITE = Switch(0x41, 0, 'IGNITION!!!')
 
-PRESS_FILL = Switch(0x40, 0)
-QUICK_DISC = Switch(0x43, 0)
-IGNITE = Switch(0x41, 0)
-IGNITE_SAFETY = Switch(0x41, 0)
+IGNITE_INDEX = 9
 
-IGNITE_INDEX = 13
-SAFETY_INDEX = 6
-
-MAP = {
-    4: PRESS_PROP,
-    3: OX_FILL,
-    17: OX_DUMP,
-    27: PRESS_VENT,
-    11: OX_VENT,
-    10: FUEL_VENT,
-    22: FUEL_CC,
-    9: OX_CC,
-    2: PRESS_FILL,
-    5: QUICK_DISC,
-    IGNITE_INDEX: IGNITE,
-    SAFETY_INDEX: IGNITE_SAFETY,
+LEDMAP = {
+    PRESS_PROP: 21,
+    OX_FILL: 20,
+    OX_DUMP: 12,
+    PRESS_VENT: 25,
+    OX_VENT: 8,
+    FUEL_VENT: 7,
+    FUEL_CC: 23,
+    OX_CC: 18,
+    PRESS_FILL: 16,
+    QUICK_DISC: 26,
+    IGNITE: 24
 }
 
-relay_pins = [4,3,17,27,11,10,22,9,2,5,IGNITE_INDEX, SAFETY_INDEX]
+MAP = {
+    11: PRESS_PROP,
+    6: OX_FILL,
+    13: OX_DUMP,
+    2: PRESS_VENT,
+    3: OX_VENT,
+    10: FUEL_VENT,
+    4: FUEL_CC,
+    17: OX_CC,
+    5: PRESS_FILL,
+    22: QUICK_DISC,
+    IGNITE_INDEX: IGNITE
+}
+
+ENABLE_PIN = 19
 
 def getSwitch(channel):
     return not GPIO.input(channel)
 
-moistEnabled = False
 
 def my_callback(channel):
     if not moistEnabled:
-        print("not enabled :(")
+        print("event> not enabled :(")
         return
 
     time.sleep(0.01)
     switch_in = getSwitch(channel) 
     switch = MAP[channel]
 
-    print("channel:", channel, "input:", switch_in)
+    print("\nevent> channel:", channel, "input:", switch_in)
+    print("event-english> ", switch.string, " is being ", ("OPENED" if switch_in else "CLOSED"))
 
-    if(switch == IGNITE or switch == IGNITE_SAFETY):
-        output = (1 if (getSwitch(IGNITE_INDEX) and getSwitch(SAFETY_INDEX)) else 0)
-        sendData(switch.opcode, [output])
-    else:
-        output = (1 if (switch.is_no != switch_in) else 0)
-        sendData(switch.opcode, [output])
+    output = (1 if (switch.is_no != switch_in) else 0)
+    GPIO.output(LEDMAP[switch], output)
+    sendData(switch.opcode, [output])
 
 
 GPIO.setmode(GPIO.BCM)
 
-for pin in relay_pins:
+for pin in MAP:
     GPIO.setup(pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
     GPIO.add_event_detect(pin, GPIO.BOTH, callback=my_callback, bouncetime=25)
 
-for channel in [27, 11, 10]:
-    switch = MAP[channel]
+for valve, ledpin in LEDMAP.items():
+    GPIO.setup(ledpin, GPIO.OUT)
+    GPIO.output(ledpin, 0)
+
+for channel, switch in MAP.items():
     switch_in = getSwitch(channel)
+    GPIO.output(LEDMAP[switch], switch_in)
     sendData(switch.opcode, [1 if (switch.is_no != switch_in) else 0])
 
-ENABLE_PIN = 19
 GPIO.setup(ENABLE_PIN, GPIO.IN, pull_up_down = GPIO.PUD_UP)
-
-LED_PIN = 26
-GPIO.setup(LED_PIN, GPIO.OUT)
-
 
 #main begins here
 clientProcess = Process(target=serv.sendFromQueue, args=(dataQueue,))
 usingServer = True
+moistEnabled = False
 
 try:
     serv.connect('arescdhbeta', 9999)
     clientProcess.start()
-    print("connected to server!")
+    print("TCP> connected to server!")
 except socket.error as e:
-    print("Error starting connection to server, code ", e)
+    print("TCP> Error starting connection to server, code ", e)
     usingServer = False
 
 led = 0
@@ -111,7 +117,7 @@ led = 0
 while True:
     value = getSwitch(ENABLE_PIN)
     if moistEnabled != value:
-        print("Enabling MOIST" if value else "Disabling MOIST")
+        print("\nENABLE> ", "Enabling MOIST" if value else "Disabling MOIST")
         moistEnabled = value
         led = 0
     
@@ -120,12 +126,12 @@ while True:
         turnOnLED = (led < 1)
 
     if turnOnLED:
-        GPIO.output(LED_PIN, 1)
+        GPIO.output(LEDMAP[IGNITE], 1)
     else:
-        GPIO.output(LED_PIN, 0)
+        GPIO.output(LEDMAP[IGNITE], 0)
 
     led = led + 1
     if(led > 10):
         led = 0
 
-    time.sleep(0.02 if getSwitch(SAFETY_INDEX) else 0.2)
+    time.sleep(0.02 if getSwitch(IGNITE_INDEX) else 0.2)
