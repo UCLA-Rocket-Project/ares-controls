@@ -1,7 +1,7 @@
 #MCU constants
 from enum import Enum
 from collections import namedtuple
-import opcodes as op
+from libares.opcodes import *
 
 class Addr:
     GCM = 0x80 #subject to change
@@ -17,7 +17,7 @@ class Relays(Enum):
     FUEL_CC = Relay(Addr.FCM, 3)
     OX_CC = Relay(Addr.FCM, 4)
     OX_DUMP = Relay(Addr.FCM, 5)
-    
+
     KBTL_FILL = Relay(Addr.GCM, 0)
     TBTL_FILL = Relay(Addr.GCM, 1)
     IGNITION = Relay(Addr.GCM, 2)
@@ -42,22 +42,25 @@ FCMRelays = [
 ]
 
 OPCODE_MATCHER = {
-	op.PRESS_VENT_SET: Relays.PRESS_VENT,
-	op.PRESS_VENT_DELAYED_SET: Relays.PRESS_VENT,
-	op.OX_VENT_SET: Relays.OX_VENT,
-	op.OX_VENT_DELAYED_SET: Relays.OX_VENT,
-        op.OX_DUMP_SET: Relays.OX_DUMP,
-	op.FUEL_VENT_SET: Relays.FUEL_VENT,
-	op.FUEL_VENT_DELAYED_SET: Relays.FUEL_VENT,
-	op.FUEL_CC_SET: Relays.FUEL_CC,
-	op.FUEL_CC_DELAYED_SET: Relays.FUEL_CC,
-	op.OX_CC_SET: Relays.OX_CC,
-	op.OX_CC_DELAYED_SET: Relays.OX_CC,
-	op.TBTL_FILL_SET: Relays.TBTL_FILL,
-        op.KBTL_FILL_SET: Relays.KBTL_FILL,
-	op.IGNITION_SET: Relays.IGNITION,
-        op.QD_SET: Relays.QD
-	# op.IGNITE_FOR_TIME: Relays.IGNITION
+    # FCM
+	OP_FCM_PRESS_VENT_SET: Relays.PRESS_VENT,
+	OP_FCM_PRESS_VENT_DELAYED_SET: Relays.PRESS_VENT,
+	OP_FCM_OX_VENT_SET: Relays.OX_VENT,
+	OP_FCM_OX_VENT_DELAYED_SET: Relays.OX_VENT,
+	OP_FCM_FUEL_VENT_SET: Relays.FUEL_VENT,
+	OP_FCM_FUEL_VENT_DELAYED_SET: Relays.FUEL_VENT,
+    OP_FCM_FUEL_CC_SET: Relays.FUEL_CC,
+	OP_FCM_FUEL_CC_DELAYED_SET: Relays.FUEL_CC,
+    OP_FCM_OX_CC_SET: Relays.OX_CC,
+	OP_FCM_OX_CC_DELAYED_SET: Relays.OX_CC,
+    OP_FCM_OX_DUMP_SET: Relays.OX_DUMP,
+	OP_FCM_OX_DUMP_DELAYED_SET: Relays.OX_DUMP,
+
+    # GCM
+    OP_GCM_TBTL_FILL_SET: Relays.TBTL_FILL,
+    OP_GCM_KBTL_FILL_SET: Relays.KBTL_FILL,
+	OP_GCM_IGNITION_SET: Relays.IGNITION,
+    OP_GCM_QD_SET: Relays.QD
 }
 
 IS_NORMALLY_CLOSED = {

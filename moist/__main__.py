@@ -3,7 +3,8 @@ import time
 from multiprocessing import Process, SimpleQueue
 import serverClient as serv
 import socket
-from collections import namedtuple
+from libares.moistconsts import *
+from libares.opcodes import *
 
 dataQueue = SimpleQueue()
 
@@ -14,79 +15,31 @@ def sendData(opcode, data):
     dataQueue.put(toSend)
     print("event-raw> Send data: 0x{}".format(bytearray(toSend).hex()))
 
-Switch = namedtuple('Switch', 'opcode is_no string')
-
-PRESS_PROP = Switch(0x32, 0, 'PRESS PROP')
-OX_FILL = Switch(0x33, 0, 'OX FILL')
-OX_DUMP = Switch(0x3e, 0, 'OX DUMP')
-PRESS_VENT = Switch(0x34, 0, 'PRESS VENT')
-OX_VENT = Switch(0x36, 0, 'OX VENT')
-FUEL_VENT = Switch(0x38, 0, 'FUEL VENT')
-FUEL_CC = Switch(0x3a, 0, 'FUEL CC')
-OX_CC = Switch(0x3c, 0, 'OX CC')
-
-PRESS_FILL = Switch(0x40, 0, 'PRESS FILL')
-QUICK_DISC = Switch(0x43, 0, 'QUICK DISCONNECT')
-IGNITE = Switch(0x41, 0, 'IGNITION!!!')
-
-IGNITE_INDEX = 9
-
-LEDMAP = {
-    PRESS_PROP: 21,
-    OX_FILL: 20,
-    OX_DUMP: 12,
-    PRESS_VENT: 25,
-    OX_VENT: 8,
-    FUEL_VENT: 7,
-    FUEL_CC: 23,
-    OX_CC: 18,
-    PRESS_FILL: 16,
-    QUICK_DISC: 26,
-    IGNITE: 24
-}
-
-MAP = {
-    11: PRESS_PROP,
-    6: OX_FILL,
-    13: OX_DUMP,
-    2: PRESS_VENT,
-    3: OX_VENT,
-    10: FUEL_VENT,
-    4: FUEL_CC,
-    17: OX_CC,
-    5: PRESS_FILL,
-    22: QUICK_DISC,
-    IGNITE_INDEX: IGNITE
-}
-
-ENABLE_PIN = 19
-
 def getSwitch(channel):
     return not GPIO.input(channel)
 
-
-def my_callback(channel):
+def switch_callback(channel):
     if not moistEnabled:
         print("event> not enabled :(")
         return
 
     time.sleep(0.01)
-    switch_in = getSwitch(channel) 
+    switch_in = getSwitch(channel)
     switch = MAP[channel]
 
     print("\nevent> channel:", channel, "input:", switch_in)
-    print("event-english> ", switch.string, " is being ", ("OPENED" if switch_in else "CLOSED"))
+    print("event-english> ", OPCODE_STRINGS[switch.opcode],
+        " is being ", ("OPENED" if switch_in else "CLOSED"))
 
     output = (1 if (switch.is_no != switch_in) else 0)
     GPIO.output(LEDMAP[switch], output)
     sendData(switch.opcode, [output])
 
-
 GPIO.setmode(GPIO.BCM)
 
 for pin in MAP:
     GPIO.setup(pin, GPIO.IN, pull_up_down = GPIO.PUD_UP)
-    GPIO.add_event_detect(pin, GPIO.BOTH, callback=my_callback, bouncetime=25)
+    GPIO.add_event_detect(pin, GPIO.BOTH, callback=switch_callback, bouncetime=25)
 
 for valve, ledpin in LEDMAP.items():
     GPIO.setup(ledpin, GPIO.OUT)
@@ -120,7 +73,7 @@ while True:
         print("\nENABLE> ", "Enabling MOIST" if value else "Disabling MOIST")
         moistEnabled = value
         led = 0
-    
+
     turnOnLED = ((led < 10) if not usingServer else (led < 3 or (led > 5 and led < 8)))
     if not moistEnabled:
         turnOnLED = (led < 1)

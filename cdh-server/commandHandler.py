@@ -1,5 +1,5 @@
-import opcodes as op
-import mcuconsts as consts
+import libares.opcodes as op
+import libares.mcuconsts as consts
 
 ERROR = [consts.Addr.CDH, 0xe1]
 
