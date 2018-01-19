@@ -3,7 +3,7 @@ import sys
 import socketserver
 
 import serialHandler
-from libares import opcodes
+from libares import constants
 import commandHandler as ch
 
 sh = serialHandler.getHandler()
@@ -36,11 +36,11 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
 
     def handleCDHCommand(self, data):
         opcode = data[0]
-        if opcode == opcodes.GET_CONNECTED_DEVICES:
+        if opcode == constants.OP_CDH_GET_CONNECTED_DEVICES:
             deviceString = ', '.join(sh.getConnectedPorts())
             return True, str.encode('[' + deviceString + ']')
 
-        elif opcode == opcodes.CONNECT_DEVICE:
+        elif opcode == constants.OP_CDH_CONNECT_DEVICE:
             try:
                 port = data[1:data.index(b'\x00')].decode('ascii')
                 print('   cdh-command #> attempting serial connection to {}'.format(port))
