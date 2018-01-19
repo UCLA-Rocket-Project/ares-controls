@@ -24,9 +24,9 @@ class Relays(Enum):
     FUEL_CC = Relay(Addr.FCM, 4, True)
     OX_CC = Relay(Addr.FCM, 5, True)
     OX_DUMP = Relay(Addr.FCM, 6, True)
-    KBTL_FILL = Relay(Addr.GCM, 8, True)
-    TBTL_FILL = Relay(Addr.GCM, 7, True)
-    IGNITION = Relay(Addr.GCM, 6, True)
+    KBTL_FILL = Relay(Addr.GCM, 6, True)
+    TBTL_FILL = Relay(Addr.GCM, 4, True)
+    IGNITION = Relay(Addr.GCM, 3, True)
     QD = Relay(Addr.GCM, 5, True)
 
 class OpType(Enum):

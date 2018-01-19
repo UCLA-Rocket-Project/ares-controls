@@ -18,16 +18,16 @@ class Addr:
 Relay = namedtuple('Relay', 'addr relay nc')
 
 class Relays(Enum):
-    PRESS_VENT = Relay(Addr.FCM, 0, False)
-    OX_VENT = Relay(Addr.FCM, 1, False)
-    FUEL_VENT = Relay(Addr.FCM, 2, False)
-    FUEL_CC = Relay(Addr.FCM, 3, True)
-    OX_CC = Relay(Addr.FCM, 4, True)
-    OX_DUMP = Relay(Addr.FCM, 5, True)
-    KBTL_FILL = Relay(Addr.GCM, 0, True)
-    TBTL_FILL = Relay(Addr.GCM, 1, True)
-    IGNITION = Relay(Addr.GCM, 2, True)
-    QD = Relay(Addr.GCM, 3, True)
+    PRESS_VENT = Relay(Addr.FCM, 1, False)
+    OX_VENT = Relay(Addr.FCM, 2, False)
+    FUEL_VENT = Relay(Addr.FCM, 3, False)
+    FUEL_CC = Relay(Addr.FCM, 4, True)
+    OX_CC = Relay(Addr.FCM, 5, True)
+    OX_DUMP = Relay(Addr.FCM, 6, True)
+    KBTL_FILL = Relay(Addr.GCM, 6, True)
+    TBTL_FILL = Relay(Addr.GCM, 4, True)
+    IGNITION = Relay(Addr.GCM, 3, True)
+    QD = Relay(Addr.GCM, 5, True)
 
 class OpType(Enum):
     SETVALVE = 1
