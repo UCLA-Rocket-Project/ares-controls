@@ -79,7 +79,7 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
             retry = False
             attemptCount += 1
             for response in mcuResponses:
-                if response[0] == b'\xc0': # pi address, success = 0
+                if len(response) > 0 and response[0] == b'\xc0': # pi address, success = 0
                     retry = True
                     print("  tcp #> Received error code: {}".format(response), file=sys.stderr)
                     errorCode = b'Received error code: ' + response
