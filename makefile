@@ -1,7 +1,12 @@
 MKDIR_BIN = @mkdir -p bin
 EXEC_PERMS = chmod +x
 
-libs: libares
+clean:
+	@rm -rf cdh-server/libares
+	@rm -rf moist/libares
+	-rm -rf bin/
+
+libs: clean libares/
 	@python -m compileall libares/
 	@cp -r libares cdh-server/
 	@cp -r libares moist/
