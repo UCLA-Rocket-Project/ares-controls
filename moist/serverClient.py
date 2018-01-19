@@ -26,5 +26,3 @@ def sendFromQueue(queue):
             print("Received: {}".format(received))
 
     print("Socket connection closed")
-
-

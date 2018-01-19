@@ -4,12 +4,14 @@ EXEC_PERMS = chmod +x
 clean:
 	@rm -rf cdh-server/libares
 	@rm -rf moist/libares
-	-rm -rf bin/
+	@rm -rf pyclient/libares
+	@-rm -rf bin/
 
 libs: clean libares/
 	@python -m compileall libares/
 	@cp -r libares cdh-server/
 	@cp -r libares moist/
+	@cp -r libares pyclient/
 
 
 cdhserv: libs cdh-server/*.py
