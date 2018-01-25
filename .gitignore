@@ -3,3 +3,4 @@
 bin/
 cdh-server/libares
 moist/libares
+pyclient/libares

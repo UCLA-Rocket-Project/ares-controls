@@ -28,7 +28,7 @@ class Relays(Enum):
     IGNITION = Relay(Addr.GCM, 2, True)
     TBTL_FILL = Relay(Addr.GCM, 3, True)
     KBTL_FILL = Relay(Addr.GCM, 4, True)
-    OX_FILL = Relay(Addr.GCM, 4, True) 
+    OX_FILL = Relay(Addr.GCM, 5, True) 
 
 class OpType(Enum):
     SETVALVE = 1
