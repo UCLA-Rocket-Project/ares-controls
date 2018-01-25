@@ -18,16 +18,17 @@ class Addr:
 Relay = namedtuple('Relay', 'addr relay nc')
 
 class Relays(Enum):
-    PRESS_VENT = Relay(Addr.FCM, 1, False)
-    OX_VENT = Relay(Addr.FCM, 2, False)
-    FUEL_VENT = Relay(Addr.FCM, 3, False)
-    FUEL_CC = Relay(Addr.FCM, 4, True)
-    OX_CC = Relay(Addr.FCM, 5, True)
+    FUEL_VENT = Relay(Addr.FCM, 1, False)
+    OX_CC = Relay(Addr.FCM, 2, True)
+    FUEL_CC = Relay(Addr.FCM, 3, True)
+    PRESS_VENT = Relay(Addr.FCM, 4, False)
+    OX_VENT = Relay(Addr.FCM, 5, False)
     OX_DUMP = Relay(Addr.FCM, 6, True)
-    KBTL_FILL = Relay(Addr.GCM, 6, True)
-    TBTL_FILL = Relay(Addr.GCM, 4, True)
-    IGNITION = Relay(Addr.GCM, 3, True)
-    QD = Relay(Addr.GCM, 5, True)
+    QD = Relay(Addr.GCM, 0, True)
+    IGNITION = Relay(Addr.GCM, 2, True)
+    TBTL_FILL = Relay(Addr.GCM, 3, True)
+    KBTL_FILL = Relay(Addr.GCM, 4, True)
+    OX_FILL = Relay(Addr.GCM, 4, True) 
 
 class OpType(Enum):
     SETVALVE = 1
@@ -60,7 +61,8 @@ _data = {
     "OP_GCM_IGNITION_SET":            [0x40, OpType.SETVALVE, "ignitionSet", Relays.IGNITION],
     "OP_GCM_QD_SET":                  [0x41, OpType.SETVALVE, "qdSet", Relays.QD],
     "OP_GCM_KBTL_FILL_SET":           [0x42, OpType.SETVALVE, "kbtlSet", Relays.KBTL_FILL],
-    "OP_GCM_TBTL_FILL_SET":           [0x43, OpType.SETVALVE, "tbtlSet", Relays.TBTL_FILL]
+    "OP_GCM_TBTL_FILL_SET":           [0x43, OpType.SETVALVE, "tbtlSet", Relays.TBTL_FILL],
+    "OP_GCM_OX_FILL_SET":             [0x44, OpType.SETVALVE, "oxFillSet", Relays.OX_FILL]
 }
 
 opcodes = {}
